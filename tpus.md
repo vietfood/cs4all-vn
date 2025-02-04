@@ -260,7 +260,7 @@ We'll be FLOPs-bound when $\frac{6.7e7 + 2e4\cdot B}{8.1e11} < \frac{1.3e8 \cdot
 
 {% details Click here for the answer. %}
 
-**Answer:** In a TPUv4e we have 2D connectivity. Thus there are two ports from which our target chip can receive data, and likewise two ports from which our source chip can output data. The amount of data we have to transfer is `sizeof bfloat16 * 8 * 128 * 8192 = 1.7e10` bytes. We can transfer from both ports simultaneously, so we get $2 * 5e10 = 1e11$ bytes transferred per second, which means it'll take $\frac{1.7e10\text{ bytes}}{1e11\text{ bytes/second}} = 170\text{ms}$ to transfer the whole array, without accounting for latency. In a `4x4` slice, we have six hops between chips $(0, 0)$ and $(3, 3)$, since there are no wraparound links for axes with fewer than 16 chips. Thus the latency of the transfer is $3\mu s$, and the whole transfer will take $3\mu s + 170ms = 170004 \mu s$.
+**Answer:** In a TPUv4e we have 2D connectivity. Thus there are two ports from which our target chip can receive data, and likewise two ports from which our source chip can output data. The amount of data we have to transfer is `2 * 8 * 128 * 8192 = 1.7e7` bytes. We can transfer from both ports simultaneously (i.e. send half the array right and half down), so we get `2 * 5e10 = 1e11` bytes transferred per second, which means it'll take `1.7e7 / 1e11 = 170us` to do one hop. In a `4x4` slice, we have six hops between chips $(0, 0)$ and $(3, 3)$, since there are no wraparound links for axes with fewer than 16 chips. Since the latency of each hop is about $1\mu s$, the first byte will arrive in about $6\mu s$ and the total transfer will take $170\mu s \cdot 6 = 1ms$.
 
 {% enddetails %}
 

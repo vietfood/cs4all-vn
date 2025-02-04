@@ -273,7 +273,7 @@ Now here are a couple of useful worked problems to try and implement using `jax.
 
 ## Worked Problems
 
-Here are some random JAX-related problems. I'll add some more later. For all of these, you'll need some number of TPUs in a Colab. You can use a public Colab with TPUv3 or launch your own internal Colab. From now on, we'll assume you have N devices available.
+Here are some random JAX-related problems. I'll add some more later. For all of these, you'll need some number of TPUs in a Colab. You can use a public Colab with TPUv2-8. From now on, we'll assume you have N devices available.
 
 **Problem 1:** For the next several parts, we'll let **A** be an array of activations of shape float32[S<sub>X</sub>, D<sub>Y</sub>] with `X * Y = N`. Do the following:
 
