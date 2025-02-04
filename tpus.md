@@ -256,7 +256,10 @@ We'll be FLOPs-bound when $\frac{6.7e7 + 2e4\cdot B}{8.1e11} < \frac{1.3e8 \cdot
 
 {% enddetails %}
 
-**Question 5 [ICI bandwidth]:** Let's say we have a TPU v5e `4x4` slice. Let's say we want to send an array of type `bfloat16[8, 128, 8192]` from `TPU{0,0}` to `TPU{3, 3}`. Let's say the per-hop latency for TPU v5e is $\frac{1}{2}\mu s$. a) How soon will the first byte arrive at its destination, and b) How long will the total transfer take?
+**Question 5 [ICI bandwidth]:** Let's say we have a TPU v5e `4x4` slice. Let's say we want to send an array of type `bfloat16[8, 128, 8192]` from `TPU{0,0}` to `TPU{3, 3}`. Let's say the per-hop latency for TPU v5e is $1\mu s$. 
+
+1. How soon will the first byte arrive at its destination?
+2. How long will the total transfer take?
 
 {% details Click here for the answer. %}
 
