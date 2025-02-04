@@ -710,7 +710,7 @@ Note that these formulas are mathematical statements, with no mention of shardin
 
 Above we derived that when using a combination of FSDP + model parallelism, we can be compute-bound when 
 
-$$ \frac{B}{N} > \frac{4\alpha}{M_X M_Y F} $$
+$$ \frac{B}{N} > \frac{4\alpha^2}{M_X M_Y F} $$
 
 Here we present an alternate derivation of this fact.  We start by setting the communication time equal to the computation time, and look for a condition which makes this equality impossible.
 
