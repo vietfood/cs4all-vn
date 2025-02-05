@@ -152,7 +152,7 @@ Once in TensorBoard, the profiler has a few key tabs that help you understand yo
 2. **Graph Viewer** shows the HLO graph, letting you see what parts of the program feed into each other and how things are sharded. 
 3. **Memory Profile and Memory Viewer:** these show how much memory your program is using.
 
-While it's slightly difficult to share profiles, [here](https://ui.perfetto.dev/#!/?s=81243a5dedeb0695e564ac1ef7d96ad8d330149d) is a Perfetto link that contains at least the Trace Viewer component for a simple Transformer. [This Colab](https://colab.research.google.com/drive/1_6krERgtolH7hbUIo7ewAMLlbA4fqEF8?usp=sharing) lets you generate the full JAX/TensorBoard trace and play around with it.
+While it's slightly difficult to share profiles, [here](https://ui.perfetto.dev/#!/?s=fa9f13b487bde622707c1a503f9227c34594760a) is a Perfetto link that contains at least the Trace Viewer component for a simple Transformer. [This Colab](https://colab.research.google.com/drive/1_6krERgtolH7hbUIo7ewAMLlbA4fqEF8?usp=sharing) lets you generate the full JAX/TensorBoard trace and play around with it.
 
 ### Trace Viewer
 
@@ -213,8 +213,7 @@ It's really helpful to stare at a bunch of HLO graphs and try to map HLO ops ont
 
 ### Looking at a real(ish) example profile
 
-[This Colab](https://colab.research.google.com/drive/1_6krERgtolH7hbUIo7ewAMLlbA4fqEF8?usp=sharing) has an example profile for a fake Transformer. [Here's](https://ui.perfetto.dev/#!/?s=81243a5dedeb0695e564ac1ef7d96ad8d330149d
-) a Perfetto link to at least see the Trace Viewer if you're in a hurry. I've gone to more effort than usual to annotate the trace with `jax.named_scope` calls so you can identify what's going on.
+[This Colab](https://colab.research.google.com/drive/1_6krERgtolH7hbUIo7ewAMLlbA4fqEF8?usp=sharing) has an example profile for a fake Transformer. [Here's](https://ui.perfetto.dev/#!/?s=fa9f13b487bde622707c1a503f9227c34594760a) a Perfetto link to at least see the Trace Viewer if you're in a hurry. I've gone to more effort than usual to annotate the trace with `jax.named_scope` calls so you can identify what's going on.
 
 {% include figure.liquid path="assets/img/transformer-xprof.png" class="img-fluid" %}
 
