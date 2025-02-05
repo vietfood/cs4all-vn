@@ -114,7 +114,7 @@ ROOT %dot.4 = f32[16,128]{1,0} dot(f32[256,16]{1,0} %convert.3, f32[128,256]{1,0
 
 is the actual matmul above that multiplies two f32 matrices along the 0 and 1 dimension, respectively.
 
-**To transform this HLO to code that can be executed on the TPU, the XLA compiler first lowers it to LLO** (low-level optimizer) IR. LLO programs the TPU directly, scheduling copies between memories, pushing arrays onto the systolic array, etc. LLO code contains primitives that push buffers into the systolic array, pull results off, and schedule DMAs that communicate between different pieces of TPU memory. Once this has been lowered to LLO, it is then compiled to bytecode that is loaded into the TPU SMEM and executed.
+**To transform this HLO to code that can be executed on the TPU, the XLA compiler first lowers it to LLO** (low-level optimizer) IR. LLO programs the TPU directly, scheduling copies between memories, pushing arrays onto the systolic array, etc. LLO code contains primitives that push buffers into the systolic array, pull results off, and schedule DMAs that communicate between different pieces of TPU memory. Once this has been lowered to LLO, it is then compiled to machine code that is loaded into the TPU IMEM and executed.
 
 When a program is running slower than we'd like, we primarily work with the JAX level to improve performance. Doing so, however, often requires us to understand some of the semantics of HLO and how the code is actually running on the TPU. When something goes wrong at a lower level, we pull yet another escape hatch and write custom kernels in [Pallas](https://jax.readthedocs.io/en/latest/pallas/tpu/details.html). To view the HLO of a program and its runtime statistics, we use the JAX profiler.
 
