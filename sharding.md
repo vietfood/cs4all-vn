@@ -368,7 +368,7 @@ In this case the *local* sharded block matrix multiplies are at least *possible*
 
 $$\textbf{A}[I, J_X] \cdot_\text{LOCAL} \textbf{B}[J_X, K] \rightarrow C[I, K] \{\ U_X \}$$
 
-The notation **{ U<sub>X</sub> }** reads "**unreduced** along X mesh axis” and refers to this status of the operation being "incomplete” in a sense, in that it will only be finished pending a final sum. The \*local syntax means we perform the local sum but leave the result unreduced.
+The notation **{ U<sub>X</sub> }** reads "**unreduced** along X mesh axis” and refers to this status of the operation being "incomplete” in a sense, in that it will only be finished pending a final sum. The $\cdot_\text{LOCAL}$ syntax means we perform the local sum but leave the result unreduced.
 
 This can be seen as the following result about matrix multiplications and outer products:
 
@@ -400,7 +400,7 @@ $$\begin{align*}
 
 {% include figure.liquid path="assets/img/reduce-scatter.gif" class="img-fluid" %}
 
-The communication time for each hope is simply the per-shard bytes $$V$$ divided by the bandwidth, as it was for an AllGather, so we have
+The communication time for each hop is simply the per-shard bytes $$V$$ divided by the bandwidth, as it was for an AllGather, so we have
 
 $$T_{\text{comms per AllGather or ReduceScatter}} = \frac{V}{W_\text{ICI}}$$
 
@@ -464,7 +464,7 @@ $$\textbf{ReduceScatter}_X A'[I] \{ U_X \} \rightarrow A'[I_X]$$
 
 Likewise, $$\text{ReduceScatter}_X(A[I] \{U_X\}) \to A[I_X])$$ in the forward pass implies $$\text{AllGather}_{X}(A'[I_X]) \to A'[I]$$ in the backwards pass.
 
-Turning an AllReduce into an AllGather and ReduceScatter also has the convenient property that we can defer the final AllGather until some later moment. also has the convenient property that Very commonly we'd rather not pay the cost of reassembling the full matrix product replicated across the devices. Rather we'd like to preserve a sharded state even in this case of combining two multiplicands with sharded contracting dimensions:
+Turning an AllReduce into an AllGather and ReduceScatter also has the convenient property that we can defer the final AllGather until some later moment. Very commonly we'd rather not pay the cost of reassembling the full matrix product replicated across the devices. Rather we'd like to preserve a sharded state even in this case of combining two multiplicands with sharded contracting dimensions:
 
 $$A[I, J_X] \cdot B[J_X, K] \rightarrow C[I, K_X]$$
 
