@@ -89,7 +89,9 @@ $$\begin{equation}
 T_\text{math} = \frac{\text{Computation FLOPs}}{\text{Accelerator FLOPs/s}}
 \end{equation}$$
 
-**Communication within a chip:** *Within an accelerator*, tensors need to be transferred between on-chip memory (HBM) and the compute cores. You'll see the bandwidth of this link referred to as 'HBM bandwidth'.
+For instance, an NVIDIA H100 can perform about 1.98e15 bfloat16<d-footnote>bf16 is short for <a href="https://en.wikipedia.org/wiki/Bfloat16_floating-point_format">bfloat16</a>, a 16-bit floating point format often used in ML.</d-footnote> FLOPs/s while a TPU v6e can perform 9.1e14 FLOPs/s. That means doing 1e12 FLOPs on an H100 will take (roughly) `1e12 / 1.98e15 = 505us` and `1e12 / 9.1e14 = 1.1ms` on a TPU v6e.<d-footnote>Note that these chips have different costs, so this doesn't mean one is better than the other.</d-footnote>
+
+**Communication within a chip:** *Within an accelerator*, tensors need to be transferred between on-chip memory (HBM) and the compute cores. You'll see the bandwidth of this link referred to as 'HBM bandwidth'. On an H100, [this is about 3.35TB/s](https://www.nvidia.com/en-us/data-center/h100/) and [on TPU v6e this is about 1.6TB/s](https://cloud.google.com/tpu/docs/v6e).
 
 **Communication between chips:**  When we distribute a model *across multiple accelerators*, tensors frequently need to be transferred between them. There are often a few options for this on our hardware (ICI, DCN, and PCIe), each with different bandwidths. 
 
@@ -127,7 +129,7 @@ T_\text{math} > T_\text{comms} \Leftrightarrow \frac{\text{Algorithm FLOPs}} {\t
 
 The quantity $\text{Intensity}(\text{Accelerator})$ is the arithmetic intensity at which our accelerator achieves its peak FLOPs/s. **For the TPU v5e MXU, this is about 240 FLOPs/byte**<d-footnote>The MXU is the matrix multiply unit on the TPU. We specify this here because the TPU has other accelerators like the VPU that are responsible for elementwise operations that have a different peak FLOPs/s.</d-footnote>, since the TPU can perform `1.97e14` FLOPs/s and load `8.2e11` bytes/s from HBM. That means if an algorithm has a lower arithmetic intensity than 240<d-footnote>This is only true if the algorithm loads its weights from HBM and runs in the MXU. As we'll discuss in the next section, we can sometimes store parameters in VMEM which has a much higher bandwidth. Many algorithms also run in the VPU, which has different performance characteristics.</d-footnote> FLOPs/byte, it will be bound by byte loading and thus we won't make good use of our hardware. Let's look at one such example:
 
-**<span style="color:#7ab5ff">Example (dot product)</span>:** to compute the dot product of two vectors in bfloat16 precision<d-footnote>bf16 is short for <a href="https://en.wikipedia.org/wiki/Bfloat16_floating-point_format">bfloat16</a>, a 16-bit floating point format often used in ML.</d-footnote>, `x • y: bf16[N], bf16[N] → bf16[1]`, we need to load $x$ and $y$ from memory, each of which has $2 * N = 2N$ bytes, perform $N$ multiplications and $N-1$ additions, and write $2$ bytes back into HBM
+**<span style="color:#7ab5ff">Example (dot product)</span>:** to compute the dot product of two vectors in bfloat16 precision, `x • y: bf16[N], bf16[N] → bf16[1]`, we need to load $x$ and $y$ from memory, each of which has $2 * N = 2N$ bytes, perform $N$ multiplications and $N-1$ additions, and write $2$ bytes back into HBM
 $$\begin{equation}
 \text{Intensity}(\text{dot product}) = \frac{\text{Total FLOPs}}{\text{Total Bytes}} = \frac{N + N - 1}{2N + 2N + 2} = \frac{2N - 1}{4N + 2} \rightarrow \frac{1}{2}
 \end{equation}$$
@@ -184,7 +186,7 @@ Therefore we become compute-bound (now with respect to the inter-chip network) w
 
 ## A Few Problems to Work
 
-**Problem 1 [int8 matmul]:** Say we want to do $\text{int8[B, D]} *_D \text{int8[D, F]} \rightarrow \text{int8[B, F]}$ (an int8 matmul with some "batch size" $B$).<d-footnote>Here and throughout we'll use the notation $A *_D B$ to indicate that the multiplication is performing a contraction over the D dimension. This is an abuse of einsum notation.</d-footnote>
+**Problem 1 [int8 matmul]:** Say we want to do $A[B, D] \cdot_D B[D, F] \rightarrow C[B, F]$ with the same dtype as above but in int8 precision (1 byte per parameter).<d-footnote>Here and throughout we'll use the notation $A \cdot_D B$ to indicate that the multiplication is performing a contraction over the D dimension. This is an abuse of einsum notation.</d-footnote>
 
 1. How many bytes need to be loaded from memory? How many need to be written back to memory? 
 2. How many total OPs are performed? 
@@ -202,11 +204,13 @@ Throughout you can assume our HBM bandwidth is `8.1e11` bytes/s and our int8 pea
 
 {% enddetails %}
 
-**Problem 2 [int8 + bf16 matmul]:** In practice we sometimes do different weight vs. activation quantization, so we might quantize weights in int8 but keep activations in bfloat16 (and consequently perform the matmul in bfloat16). At what batch size do we become compute bound? As above, assume `1.97e14` bfloat16 FLOPs/s.
+**Problem 2 [int8 + bf16 matmul]:** In practice we sometimes do different weight vs. activation quantization, so we might quantize our weights in int8 but keep activations in bfloat16 (and consequently perform the matmul in bfloat16). At what batch size do we become compute bound? As above, assume `1.97e14` bfloat16 FLOPs/s.
+
+*Hint: this means specifically `bfloat16[B, D] * int8[D, F] -> bfloat16[B, F]` where $B$ is the "batch size".*
 
 {% details Click here for the answer. %}
 
-Again assuming B is small, we have 2BDF bfloat16 FLOPs but only DF weights. This means we become compute-bound when $$2B > 240$$ or $$B > 120$$. This is a lot lower, meaning if we can do int8 weight quantization (which is fairly easy to do) but still do bfloat16 FLOPs, we get a meaningful win in efficiency (although int8 OPs would be better).
+Again assuming B is small, we have 2BDF bfloat16 FLOPs but only DF weights (instead of 2DF in bfloat16). This means we become compute-bound when $$2B > 240$$ or $$B > 120$$. This is a lot lower, meaning if we can do int8 weight quantization (which is fairly easy to do) but still do bfloat16 FLOPs, we get a meaningful win in efficiency (although int8 OPs would be better).
 
 {% enddetails %}
 
