@@ -143,10 +143,10 @@ We can see the matmul (the fusion) and the AllReduce above. Pay particular atten
 import jax
 import jax.numpy as jnp
 
-def matmul(Wout, Win, x):
-  hidden = jnp.einsum('fd,bd->bf', Win, x)
+def matmul(x, Win, Wout):
+  hidden = jnp.einsum('bd,df->bf', x, Win)
   hidden = jax.lax.with_sharding_constraint(hidden, P('x', 'y'))
-  return jnp.einsum('df,bf->bd', Wout, hidden)
+  return jnp.einsum('bf,df->bd', hidden, Wout)
 ```
 
 This makes up like 60% of JAX parallel programming in the jit world, since it's our only way of intervening with the compiler. It's worth playing around with `with_sharding_constraint` in a Colab and getting a sense for how it works. When we write LLMs using `jax.jit`, 90% of what we do to control shardings is changing the input and output shardings (via `in_shardings` and `out_shardings`) and annotating intermediate tensors with `with_sharding_constraint` to ensure the correct comms are happening. For more jax.jit examples, [this is a great doc to read](https://jax.readthedocs.io/en/latest/notebooks/Distributed_arrays_and_automatic_parallelization.html).
@@ -183,7 +183,7 @@ assert out.shape == (4,)
 
 **Why do this instead of jax.jit?** If we'd used `jax.jit`, `slice_and_average` would have seen a global view of the array (the full `[512,]` array). We'd have had to slice out this non-uniform slice and then perform an average which XLA would have had to interpret correctly. XLA might have added the wrong communication or gotten confused. Here we see the local view and write only the communication we need.
 
-**Example \[Collective Matmul\]:** To take a more realistic example, say we to implement model parallelism where the activations are initially model sharded, i.e. A[B<sub>X</sub>, D<sub>Y</sub>] \* W[D, F<sub>Y</sub>] -> Out[B<sub>X</sub>, F<sub>Y</sub>]. Naively, we would do this by AllGathering A first followed by a local matrix multiplication:
+**Example [Collective Matmul]:** To take a more realistic example, say we to implement model parallelism where the activations are initially model sharded, i.e. A[B<sub>X</sub>, D<sub>Y</sub>] \* W[D, F<sub>Y</sub>] -> Out[B<sub>X</sub>, F<sub>Y</sub>]. Naively, we would do this by AllGathering A first followed by a local matrix multiplication:
 
 1. A[B<sub>X</sub>, D] = **AllGather**<sub>Y</sub>(A[B<sub>X</sub>, D<sub>Y</sub>]) 
 2. Out[B<sub>X</sub>, F<sub>Y</sub>] = A[B<sub>X</sub>, D] *<sub>D</sub> W[D, F<sub>Y</sub>]
@@ -259,7 +259,7 @@ expected_out = matmul(A, W)
 np.testing.assert_array_equal(shmapped_out, expected_out)
 ```
 
-This is pretty neat! We can benchmark this and see that it's also a lot faster\! [Here's](https://imgur.com/a/e9I6SrM) the profile with the default jit matmul which takes 311us with a big blocking AllGather at the beginning:
+This is pretty neat! We can benchmark this and see that it's also a lot faster! [Here's](https://imgur.com/a/e9I6SrM) the profile with the default jit matmul which takes 311us with a big blocking AllGather at the beginning:
 
 {% include figure.liquid path="assets/img/not-overlapped.png" class="img-fluid" %}
 
