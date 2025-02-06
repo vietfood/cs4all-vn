@@ -70,12 +70,7 @@ toc:
     - name: "Let's look at an implementation: JetStream"
   - name: "Worked Problems"
   - name: "Appendix"
-  - subsections:
-    - name: "How real is the batch size > 240 rule?"
-    - name: "2D Weight stationary sharding"
-    - name: "Latency bound communications"
-    - name: "Speculative Sampling"
-
+  
 # Below is an example of injecting additional post-specific styles.
 # This is used in the 'Layouts' section of this post.
 # If you use this post as a template, delete this _styles block.
@@ -522,7 +517,7 @@ T_\text{2D comms} = \frac{2BD}{2X \cdot W_\text{ici}} + \frac{4BF}{YZ \cdot W_\t
 
 where we note that the AllReduce is twice as expensive and we scale our comms by the number of axes over which each operation is performed. Assuming we have freedom to choose our topology and assuming $F=4D$ (as in LLaMA-2), we claim (by some basic calculus) that the optimal values for $X$, $Y$, and $Z$ are $X = \sqrt{N / 8}$, $YZ = \sqrt{8N}$ so the total communication is
 
-$$T_\text{2D comms} = \frac{2B}{W_\text{ici}} \left(\frac{D}{X} + \frac{8D}{YZ}\right) = \frac{\sqrt{128} BD}{\sqrt{N} \cdot W_\text{ici}} \approx \frac{11.3 B}{\sqrt{N} \cdot W_\text{ici}}$$
+$$T_\text{2D comms} = \frac{2B}{W_\text{ici}} \left(\frac{D}{X} + \frac{8D}{YZ}\right) = \frac{\sqrt{128} BD}{\sqrt{N} \cdot W_\text{ici}} \approx \frac{11.3 BD}{\sqrt{N} \cdot W_\text{ici}}$$
 
 Firstly, copying from above, normal 1D model parallelism would have $T_\text{model parallel comms} = 4BD / (3 \cdot W_\text{ici})$, so when are the new comms smaller? We have
 
@@ -530,6 +525,10 @@ $$\begin{align*}
 T_\text{model parallel comms} > T_\text{2D comms} \iff \frac{4BD}{3 \cdot W_\text{ici}} > \frac{\sqrt{128} BD}{\sqrt{N} \cdot W_\text{ici}} \\
 \iff N > 128 \cdot \left(\frac{3}{4}\right)^2 = 81
 \end{align*}$$
+
+For a general $F$, we claim this condition is
+
+$$N > 32 \cdot \left(\frac{F}{D}\right) \cdot \left(\frac{3}{4}\right)^2$$
 
 So that tells us if we have more than 81 chips, we're better off using this new scheme. Now this is a slightly weird result because we've historically found ourselves ICI bound at around ~20 way tensor parallelism. But here, even if we're communication-bound, our total communication continues to decrease with the number of total chips! What this tells us is that we can continuous to increase our chips, increase our batch size, do more parameter scaling, and see reduced latency.
 
@@ -553,7 +552,7 @@ Here's the actual throughput in tokens / us. This makes the argument fairly clea
 
 So at least in this model, we do in fact see throughput increase until about BS240 per data parallel shard.
 
-### Appendix B: 2D Weight stationary sharding
+### Appendix B: 2D Weight Stationary sharding
 
 As the topology grows, if we have access to higher dimensional meshes (like that of TPUs) it is possible to refine this further with "**2D Weight Sharding”**. By introducing a second sharding axis. We call this "**2D Weight Stationary**”, and was described in more detail in the [Efficiently Scaling Transformer Inference paper](https://arxiv.org/abs/2211.05102).
 
