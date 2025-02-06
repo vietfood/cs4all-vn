@@ -320,14 +320,14 @@ One nice thing about tensor parallelism is that it interacts nicely with the two
 $$\begin{align}
 T_{math} & = \frac{4 \cdot B \cdot D \cdot F}{Y \cdot C} \\
 T_{comms} & =
-\frac{2 * 2 * (B \cdot D)}{W_\text{ici}}\\
-\textnormal{T} & \approx \max \left(\frac{4 \cdot B \cdot D \cdot F}{Y \cdot C}, \frac{2 * 2 * (B \cdot D)}{W_\text{ici}}\right)
+\frac{2 \cdot 2 \cdot (B \cdot D)}{W_\text{ici}}\\
+\textnormal{T} & \approx \max \left(\frac{4 \cdot B \cdot D \cdot F}{Y \cdot C}, \frac{2 \cdot 2 \cdot (B \cdot D)}{W_\text{ici}}\right)
 \end{align}$$
 
 Noting that we want compute cost to be greater than comms cost, we get:
 
 $$\begin{align}
-\frac{4 \cdot B \cdot D \cdot F}{Y \cdot C} > \frac{2 * 2 * (B \cdot D)}{W_\text{ici}}
+\frac{4 \cdot B \cdot D \cdot F}{Y \cdot C} > \frac{2 \cdot 2 \cdot (B \cdot D)}{W_\text{ici}}
 \end{align}$$
 
 $$\begin{align}
