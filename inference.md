@@ -543,7 +543,7 @@ So that tells us if we have more than 81 chips, we're better off using this new 
 
 The simple rule we provided above, that our batch size must be greater than 240 tokens to be compute-bound, is roughly true but ignores some ability of the TPU to prefetch the weights while other operations are not using all available HBM, like when doing inter-device communication.
 
-Here's an empirical plot of layer time (in microseconds) for a small Transformer with d<sub>model</sub> 8192, d<sub>ff</sub> 32768, and only 2 matmuls per layer. This comes from [this](https://colab.corp.google.com/drive/1nzSpmPUbGEsz4D44LHrmXdxe-ptSOuOX?resourcekey=0-WFHqXpWgGAasCXrNnWaBdA&usp=sharing) colab. You'll see that step time increases very slowly up until around batch 240, and then increases linearly.
+Here's an empirical plot of layer time (in microseconds) for a small Transformer with d<sub>model</sub> 8192, d<sub>ff</sub> 32768, and only 2 matmuls per layer. This comes from [this Colab notebook](https://colab.sandbox.google.com/drive/1_6krERgtolH7hbUIo7ewAMLlbA4fqEF8?usp=sharing). You'll see that step time increases very slowly up until around batch 240, and then increases linearly.
 
 {% include figure.liquid path="assets/img/batch-scaling-latency.png" class="img-fluid img-small" %}
 
