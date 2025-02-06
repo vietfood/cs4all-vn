@@ -27,6 +27,8 @@ To deploy to the GitHub Pages site (with repo write permision), run `sh bin/depl
 
 If you see any issues or have questions, please leave a comment on the website itself (powered by Giscus) or in the GitHub discussion. Feel free to send a PR if you want to contribute. You can also email jaaustin [at] google [dot] com.
 
+To contribute on GitHub you will need to sign a Google "Contributor License Agreement" (CLA). You can do that here: https://cla.developers.google.com/clas.
+
 ![dragon](assets/img/dragon.png)
 
 *This book was originally called "How To Train Your Dragon", after the Dreamworks film, hence the dragon imagery.*
