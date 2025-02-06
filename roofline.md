@@ -124,7 +124,7 @@ Arithmetic intensity measures the "FLOPs per byte" of a given operation. To a fi
 $$\begin{align*}
 T_\text{math} > T_\text{comms} \Leftrightarrow \frac{\text{Computation FLOPs}} {\text{Accelerator FLOPs/s}} > \frac{\text{Communication GB}}{\text{Bandwidth GB/s}} & \\[0.5em]
 \Leftrightarrow \frac{\text{Computation FLOPs}}{\text{Communication GB}} > \frac{\text{Accelerator FLOPs/s}}{\text{Bandwidth GB/s}} & \\[0.5em]
-\Leftrightarrow \text{Intensity}(\text{Algorithm}) > \text{Intensity}(\text{Accelerator}) & \\
+\Leftrightarrow \text{Intensity}(\text{Computation}) > \text{Intensity}(\text{Accelerator}) & \\
 \end{align*}$$
 
 The quantity $\text{Intensity}(\text{Accelerator})$ is the arithmetic intensity at which our accelerator achieves its peak FLOPs/s. **For the TPU v5e MXU, this is about 240 FLOPs/byte**<d-footnote>The MXU is the matrix multiply unit on the TPU. We specify this here because the TPU has other accelerators like the VPU that are responsible for elementwise operations that have a different peak FLOPs/s.</d-footnote>, since the TPU can perform `1.97e14` FLOPs/s and load `8.2e11` bytes/s from HBM. That means if an algorithm has a lower arithmetic intensity than 240<d-footnote>This is only true if the algorithm loads its weights from HBM and runs in the MXU. As we'll discuss in the next section, we can sometimes store parameters in VMEM which has a much higher bandwidth. Many algorithms also run in the VPU, which has different performance characteristics.</d-footnote> FLOPs/byte, it will be bound by byte loading and thus we won't make good use of our hardware. Let's look at one such example:

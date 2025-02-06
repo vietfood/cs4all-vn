@@ -123,7 +123,7 @@ A matmul would look nearly identical except it would load into the MXU instead o
 
 {% include figure.liquid path="assets/img/tpu-bandwidth.png" class="img-fluid" %}
 
-**A TPU chip typically (but not always) consists of two TPU cores which share memory and can be thought of as one large accelerator** with twice the FLOPs. This has been true since TPU v4 (known as "megacore”). On older TPU chips they have separate memory and are regarded as two separate accelerators (TPU v3 and older). Inference-optimized chips like the TPU v5e only have one TPU core per chip.
+**A TPU chip typically (but not always) consists of two TPU cores which share memory and can be thought of as one large accelerator** with twice the FLOPs (known as a "megacore" configuration). This has been true since TPU v4. Older TPU chips they have separate memory and are regarded as two separate accelerators (TPU v3 and older). Inference-optimized chips like the TPU v5e only have one TPU core per chip.
 
 {% include figure.liquid path="assets/img/cores.png" class="img-fluid img-small" %}
 
