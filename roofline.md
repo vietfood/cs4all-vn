@@ -146,13 +146,13 @@ Above, as the intensity increases (moving left to right), we initially see a lin
 
 ### Matrix multiplication
 
-Let's look at our soon-to-be favorite algorithm: matrix multiplication (aka matmul). We write $$A * B \rightarrow C$$ where $$A$$ has shape $\text{bf16}[B, D]$, $B$ has shape $\text{bf16}[D, F]$, and $C$ has shape $$\text{bf16}[B, F]$$. To do the matmul we need to load $2DF + 2BD$ bytes, perform $2BDF$ FLOPs, and write $2BF$ bytes back.<d-footnote>Technically we perform $BF \times (2D - 1)$ FLOPs but this is close enough. This comes from $BDF$ multiplications and $BF * (D-1)$ additions. Section 4 has more details.</d-footnote> <d-footnote>Although the output of a matmul is technically float32 we usually cast down to bfloat16 before copying back to HBM.</d-footnote> Thus:
+Let's look at our soon-to-be favorite algorithm: matrix multiplication (aka matmul). We write $X * Y \rightarrow Z$ where $X$ has shape $\text{bf16}[B, D]$, $Y$ has shape $\text{bf16}[D, F]$, and $Z$ has shape $\text{bf16}[B, F]$. To do the matmul we need to load $2DF + 2BD$ bytes, perform $2BDF$ FLOPs, and write $2BF$ bytes back.<d-footnote>Technically we perform $BF \times (2D - 1)$ FLOPs but this is close enough. This comes from $BDF$ multiplications and $BF * (D-1)$ additions. Section 4 has more details.</d-footnote> <d-footnote>Although the output of a matmul is technically float32 we usually cast down to bfloat16 before copying back to HBM.</d-footnote> Thus:
 
 $$\begin{equation}
 \text{Intensity}(\text{matmul}) = \frac{2BDF}{2BD + 2DF + 2BF} = \frac{BDF}{BD + DF + BF}
 \end{equation}$$
 
-We can get a nice simplification if we assume our local "batch size" $$B$$ is small relative to $$D$$ and $$F$$. Then we get
+We can get a nice simplification if we assume our local "batch size" $B$ is small relative to $D$ and $F$. Then we get
 
 $$\begin{equation}
 \frac{BDF}{BD + DF + BF} \approxeq \frac{BDF}{DF} = B
