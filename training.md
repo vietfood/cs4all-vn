@@ -586,7 +586,7 @@ $$\small
 \hline
 \text{DP} & \text{In}[B_X, D] \cdot_D W_\text{in}[D, F] \cdot_F W_\text{out}[F, D] \rightarrow \text{Out}[B_X, D] \\
 \text{FSDP} & \text{In}[B_X, D] \cdot_D W_\text{in}[D_X, F] \cdot_F W_\text{out}[F, D_X] \rightarrow \text{Out}[B_X, D] \\
-\text{MP} & \text{In}[B, D_Y] \cdot_D W_\text{in}[D_Y, F_Y] \cdot_F W_\text{out}[F_Y, D_Y] \rightarrow \text{Out}[B, D_Y] \\
+\text{MP} & \text{In}[B, D_Y] \cdot_D W_\text{in}[D, F_Y] \cdot_F W_\text{out}[F_Y, D] \rightarrow \text{Out}[B, D_Y] \\
 \text{MP + FSDP}  & \text{In}[B_X, D_Y] \cdot_D W_\text{in}[D_X, F_Y] \cdot_F W_\text{out}[F_Y, D_X] \rightarrow \text{Out}[B_X, D_Y] \\
 \hline
 \end{array}$$
