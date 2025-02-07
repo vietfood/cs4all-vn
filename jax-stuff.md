@@ -96,7 +96,7 @@ import jax
 import jax.numpy as jnp
 import jax.sharding as shd
 
-# Running on a VLP=2x2. This assigns names to the two physical axes of the hardware.
+# Running on an TPU v5e 2x2. This assigns names to the two physical axes of the hardware.
 mesh = jax.make_mesh(axis_shapes=(2, 2), axis_names=('X', 'Y'))
 def P(*args):
   return shd.NamedSharding(mesh, shd.PartitionSpec(*args))
