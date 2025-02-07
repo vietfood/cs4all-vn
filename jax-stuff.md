@@ -222,13 +222,14 @@ def matmul(lhs, rhs):
 def collective_matmul_allgather_lhs_contracting(lhs, rhs):
   # lhs is the looped operand; rhs is the local operand
   axis_size = jax.lax.psum(1, axis_name='Y')  # axis_size = 4 for this example
- 
+  idx = jax.lax.axis_index('Y')
+
   chunk_size = lhs.shape[1]
   assert rhs.shape[0] % chunk_size == 0
 
   def f(i, carrys):
     accum, lhs = carrys
-    rhs_chunk = jax.lax.dynamic_slice_in_dim(rhs, i * chunk_size, chunk_size)
+    rhs_chunk = jax.lax.dynamic_slice_in_dim(rhs, (idx + i) % axis_size * chunk_size, chunk_size)
     # matmul for a chunk
     update = lhs @ rhs_chunk
     # circular shift to the left
@@ -245,7 +246,7 @@ def collective_matmul_allgather_lhs_contracting(lhs, rhs):
   # compute the last chunk after the final permute,
   # to leave lhs in the state we found it
   i = axis_size - 1
-  rhs_chunk = jax.lax.dynamic_slice_in_dim(rhs, i * chunk_size, chunk_size)
+  rhs_chunk = jax.lax.dynamic_slice_in_dim(rhs, (idx + i) % axis_size * chunk_size, chunk_size)
   update = lhs @ rhs_chunk
   return accum + update
 
