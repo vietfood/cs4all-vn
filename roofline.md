@@ -186,7 +186,7 @@ Therefore we become compute-bound (now with respect to the inter-chip network) w
 
 ## A Few Problems to Work
 
-**Problem 1 [int8 matmul]:** Say we want to do $A[B, D] \cdot_D B[D, F] \rightarrow C[B, F]$ with the same dtype as above but in int8 precision (1 byte per parameter).<d-footnote>Here and throughout we'll use the notation $A \cdot_D B$ to indicate that the multiplication is performing a contraction over the D dimension. This is an abuse of einsum notation.</d-footnote>
+**Question 1 [int8 matmul]:** Say we want to do $A[B, D] \cdot_D B[D, F] \rightarrow C[B, F]$ with the same dtype as above but in int8 precision (1 byte per parameter).<d-footnote>Here and throughout we'll use the notation $A \cdot_D B$ to indicate that the multiplication is performing a contraction over the D dimension. This is an abuse of einsum notation.</d-footnote>
 
 1. How many bytes need to be loaded from memory? How many need to be written back to memory? 
 2. How many total OPs are performed? 
@@ -204,7 +204,7 @@ Throughout you can assume our HBM bandwidth is `8.1e11` bytes/s and our int8 pea
 
 {% enddetails %}
 
-**Problem 2 [int8 + bf16 matmul]:** In practice we sometimes do different weight vs. activation quantization, so we might quantize our weights in int8 but keep activations in bfloat16 (and consequently perform the matmul in bfloat16). At what batch size do we become compute bound? As above, assume `1.97e14` bfloat16 FLOPs/s.
+**Question 2 [int8 + bf16 matmul]:** In practice we sometimes do different weight vs. activation quantization, so we might quantize our weights in int8 but keep activations in bfloat16 (and consequently perform the matmul in bfloat16). At what batch size do we become compute bound? As above, assume `1.97e14` bfloat16 FLOPs/s.
 
 *Hint: this means specifically `bfloat16[B, D] * int8[D, F] -> bfloat16[B, F]` where $B$ is the "batch size".*
 
@@ -214,9 +214,9 @@ Again assuming B is small, we have 2BDF bfloat16 FLOPs but only DF weights (inst
 
 {% enddetails %}
 
-**Problem 3:** For the problem above, make a roofline plot of peak FLOPs vs. B for several values of D and F.
+**Question 3:** For the problem above, make a roofline plot of peak FLOPs vs. B for several values of D and F.
 
-**Problem 4:** What if we wanted to perform $\text{int8[B, D]} *_D \text{int8[B, D, F]} \rightarrow \text{int8[B, F]}$ where we imagine having a different matrix for each batch element. What is the arithmetic intensity of this operation?
+**Question 4:** What if we wanted to perform $\text{int8[B, D]} *_D \text{int8[B, D, F]} \rightarrow \text{int8[B, F]}$ where we imagine having a different matrix for each batch element. What is the arithmetic intensity of this operation?
 
 {% details Click here for the answer. %}
 

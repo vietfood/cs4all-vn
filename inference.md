@@ -155,7 +155,7 @@ $$\begin{align*}
 = \frac{1.97E+14}{8.20E+11} \implies B \geq 240 = B_{\text{crit}}
 \end{align*}$$
 
-<p markdown=1 class="takeaway">**Takeaway:** To be compute-bound on any matrix multiplication, our total token batch size must be greater than $B_\text{crit}$, which depends on the hardware and quantization. For bf16 activations on TPU v5e, this is 240 tokens. This applies to any simple matmul in our Transformer (e.g. the MLP block or the attention projections).</p>
+<p markdown=1 class="takeaway">**Takeaway:** to be compute-bound on any matrix multiplication, our total token batch size must be greater than $B_\text{crit}$, which depends on the hardware and quantization. For bf16 activations on TPU v5e, this is 240 tokens. This applies to any simple matmul in our Transformer (e.g. the MLP block or the attention projections).</p>
 
 During training, we'll have a high intensity during all our matrix multiplications because we reuse the same weights over a very large batch. **That high arithmetic intensity carries over to prefill, since user prompts are typically hundreds if not thousands of tokens long.** As we saw before, the hardware arithmetic intensity of a TPUv5e is 240, so if a sequence longer than 240 tokens is fed into a dense model running on this hardware at bf16, we would expect to be compute-bound and all is well. Prompts shorter than this can technically be batched together to achieve higher utilization, but this is typically not necessary.
 
@@ -163,7 +163,7 @@ During training, we'll have a high intensity during all our matrix multiplicatio
 
 However, during generation, for each request, we can only do our forward passes one token at a time since there's a sequential dependency between steps! Thus we can only (easily) achieve good utilization by batching multiple requests together, parallelizing over the batch dimension. We'll talk about this more later, but actually batching many concurrent requests together without affecting latency is hard. For that reason, **it is much harder to saturate the hardware FLOPs with generation.**
 
-<p markdown=1 class="takeaway">**Takeaway:** Our total token batch size must be greater than $$B_{\text{crit}}$$ for generation to be compute-bound on the linear/feed-forward operations (240 for bf16 params on TPU v5e). Because generation happens serially, token-by-token, this requires us to batch multiple requests together, which is hard!</p>
+<p markdown=1 class="takeaway">**Takeaway:** our total token batch size must be greater than $$B_{\text{crit}}$$ for generation to be compute-bound on the linear/feed-forward operations (240 for bf16 params on TPU v5e). Because generation happens serially, token-by-token, this requires us to batch multiple requests together, which is hard!</p>
 
 *It's worth noting just how large this is!* Generate batch size of 240 means 240 concurrent requests generating at once, and 240 separate KV caches for dense models. That means this is difficult to achieve in practice, except in some bulk inference settings. In contrast, pushing more than 240 tokens through during a prefill is pretty routine, though some care is necessary as sparsity increases.
 
@@ -219,7 +219,7 @@ $$\begin{align}
 
 where the attention component (left) is never compute-bound, and thus doesn't need a FLOPs roofline. These are fairly useful for back-of-the-envelope calculations, e.g.
 
-<b markdown=1 style="color: #57cf57;">Pop Quiz:</b> Assume we want to sample a batch of 4 tokens from a 30B parameter dense model on TPU v5e 4x4 slice in int8 with bf16 FLOPs, 8192 context and 100 kB / token KV caches. What is a reasonable lower bound on the latency of this operation? What if we wanted to sample a batch of 256 tokens?
+<b markdown=1 style="color: #57cf57;">Pop Quiz:</b> Assume we want to take a generate step with a batch size of 4 tokens from a 30B parameter dense model on TPU v5e 4x4 slice in int8 with bf16 FLOPs, 8192 context and 100 kB / token KV caches. What is a reasonable lower bound on the latency of this operation? What if we wanted to sample a batch of 256 tokens?
 
 {% details Click here for the answer. %}
 
@@ -233,7 +233,7 @@ As you can see, there's a clear tradeoff between throughput and latency here. Sm
 
 Not only do we trade off latency and throughput with batch size as knob, we may also prefer a larger topology to a smaller one so we can fit larger batches if we find ourselves limited by HBM. The [next section](../applied-inference) explores this in more detail.
 
-<p markdown=1 class="takeaway">**Takeaway:** If you care about generation throughput, use the largest per-chip batch size possible. Any per-chip batch size above the TPU arithmetic intensity ($B_\text{crit}$, usually 120 or 240) will maximize throughput. You may need to increase your topology to achieve this. Smaller batch sizes will allow you to improve latency at the cost of throughput.</p>
+<p markdown=1 class="takeaway">**Takeaway:** iff you care about generation throughput, use the largest per-chip batch size possible. Any per-chip batch size above the TPU arithmetic intensity ($B_\text{crit}$, usually 120 or 240) will maximize throughput. You may need to increase your topology to achieve this. Smaller batch sizes will allow you to improve latency at the cost of throughput.</p>
 
 {% details There are some caveats to this from a hardware standpoint. Click here for some nits. %}
 
