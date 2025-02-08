@@ -31,4 +31,4 @@ To contribute on GitHub you will need to sign a Google "Contributor License Agre
 
 ![dragon](assets/img/dragon.png)
 
-*This book was originally called "How To Train Your Dragon", after the Dreamworks film, hence the dragon imagery.*
+*This book was originally called "How To Scale Your Dragon", after the Dreamworks film, hence the dragon imagery.*
