@@ -263,7 +263,7 @@ Briefly, to count our parameters, we have:
 
 | param            | formula                                                                                                                   | size (in bytes)                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| FFW params       | d_model<sup>2</sup> x ffw\_multiplier x 3 (for gelu \+ out-projection) x n\_layers                                       | 5,120 x 5,120 x 2.7 x 3 x 40 \= **8.5e9**                         |
+| FFW params       | d_model<sup>2</sup> x ffw\_multiplier x 3 (for gelu \+ out-projection) x n\_layers                                        | 5,120 x 5,120 x 2.7 x 3 x 40 \= **8.5e9**                         |
 | Vocab params     | 2 (input and output embeddings) x n\_embeddings x d\_model                                                                | 2 x 32,000 x 5,120 \= **0.3e9**                                   |
 | Attention params | \[2 (*q and output*) x d\_model x n\_heads x d\_qkv \+ 2 (*for k and v*) x d\_model x n\_kv\_heads x d\_qkv\] x n\_layers | (2 x 5,120 x 40 x 128 \+ 2 x 5,120 x 40 x 128\) x 40 \= **4.2e9** |
 
@@ -344,7 +344,7 @@ So far we've handwaved how we're scaling beyond a single chip. Following [Sectio
 
 **Prefill:** from a roofline standpoint, prefill is almost identical to training and almost all the same techniques and tradeoffs apply — Megatron sharding, sequence sharding (for sufficiently long context), pipelining, even FSDP are all viable! Some of these techniques even work better during prefill because you don't have an optimizer or gradients to worry about. You just have to keep the KVs kicking around so you can do generation later. As in training, increasing the number of chips gives us access to more FLOPs/s (for potentially lower TTFT), but adds communication overhead (potentially reducing throughput per chip). 
 
-Generally, for prefill on a single sequence, we first do some amount of model parallelism (again, up to about $\alpha / F$), then do sequence parallelism (like data parallelism but sharding across the sequence dimension). While sequence parallelism introduces some extra communication in attention, it is typically fairly small at longer contexts. As with training, we can overlap the communication and computation (using collective matmuls for Megatron and ring attention respectively), with increasingly unfavorable ratios as the number of chips scale. Therefore, depending on the width of the model, a moderate amount of model and sequence sharding can be close to free. _Because inference is more latency-sensitive than training, however, we often have to be more careful about perfectly overlapping communication and computation._
+Generally, for prefill on a single sequence, we first do some amount of model parallelism (again, up to about $F / \alpha$), then do sequence parallelism (like data parallelism but sharding across the sequence dimension). While sequence parallelism introduces some extra communication in attention, it is typically fairly small at longer contexts. As with training, we can overlap the communication and computation (using collective matmuls for Megatron and ring attention respectively), with increasingly unfavorable ratios as the number of chips scale. Therefore, depending on the width of the model, a moderate amount of model and sequence sharding can be close to free. _Because inference is more latency-sensitive than training, however, we often have to be more careful about perfectly overlapping communication and computation._
 
 **Generation:** For generation, increasing the number of chips gives us access to more HBM bandwidth (for potentially better per-step latency) and more HBM (allowing us to increase our batch size and improve throughput). Again, more chips means more communication overhead, so _for a fixed batch size overall throughput per chip will drop as you scale the topology_. As for specific partitioning strategies, generation is much more restrictive than prefill or training:
 
@@ -457,17 +457,29 @@ We also have a PyTorch version of JetStream available [here](https://github.com/
 
 I'm going to invent a new model based on LLaMA-2 13B for this section. Here are the details:
 
-| hyperparam      | value  |
-| --------------- | ------ |
-| n\_layers       | 64     |
-| d\_model        | 4,096  |
-| ffw\_multiplier | 4      |
-| n\_heads        | 32     |
-| n\_kv\_heads    | 8      |
-| d\_qkv          | 256    |
-| n\_embeddings   | 32,128 |
+| hyperparam        | value  |
+| ----------------- | ------ |
+| n\_layers (L)     | 64     |
+| d\_model (D)      | 4,096  |
+| d\_ff (F)         | 16,384 |
+| n\_heads (N)      | 32     |
+| n\_kv\_heads (K)  | 8      |
+| d\_qkv (H)        | 256    |
+| n\_embeddings (V) | 32,128 |
 
-**Question 1:** How many parameters does the above model have? How large are its KV caches per token?
+**Question 1:** How many parameters does the above model have? How large are its KV caches per token? *You can assume we share the input and output projection matrices.*
+
+{% details Click here for the answer. %}
+
+**Parameter count:** 
+
+* MLP parameter count: $L * D * F * 3$
+* Attention parameter count: $L * 2 * D * H * (N + K)$
+* Vocabulary parameter: $D * V$ (since we share these matrices)
+
+Our total parameter count is thus $L * D * (3F + 2H * (N + K) + V)$. Plugging in the numbers above, we have `64 * 4096 * (3*16384 + 2 * 256 * (32 + 8) + 32128) = 26.7e9`. Thus, this model has about 26.7 billion parameters.
+
+{% enddetails %}
 
 **Question 2:** Let's say we want to serve this model on a TPUv5e 4x4 slice and can fully shard our KV cache over this topology. What's the largest batch size we can fit, assuming we use int8 for everything. What if we dropped the number of KV heads to 1?
 
