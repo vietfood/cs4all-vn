@@ -329,7 +329,7 @@ $$T_{hop} = \max \left[ T_{min}, \frac{2 \cdot V}{|X| \cdot W_\text{ICI}} \right
 
 $$T_{total} = \max \left[ \frac{T_{min} \cdot |X|}{2}, \frac{V}{W_\text{ICI}} \right]$$
 
-since we perform $$\lvert X \rvert / 2$$ hops. For large reductions or gathers, we're solidly bandwidth bound. We're sending so much data that the overhead of each hop is essentially negligible. But for small arrays (e.g. when sampling from a model), this isn't negligible, and the ICI bandwidth isn't relevant. We're bound purely by latency. Another way to put this is that given a particular TPU, e.g. TPU v5e with 4.5e10 unidirectional ICI bandwidth, sending any buffer under `4.5e10 * 1e-6 = 45kB` will be latency bound.
+since we perform $$\lvert X \rvert / 2$$ hops. For large reductions or gathers, we're solidly bandwidth bound. We're sending so much data that the overhead of each hop is essentially negligible. But for small arrays (e.g. when sampling from a model), this isn't negligible, and the ICI bandwidth isn't relevant. We're bound purely by latency. Another way to put this is that given a particular TPU, e.g. TPU v5e with `4.5e10` unidirectional ICI bandwidth, sending any buffer under `4.5e10 * 1e-6 = 45kB` will be latency bound.
 
 {% enddetails %}
 
@@ -354,7 +354,7 @@ where $$\sum_i \lvert X_i \rvert / 2$$ is the length of the longest path in the 
 1) TPU v5e has 1e11 bytes/s of bidirectional ICI bandwidth for each of its 2 axes.  
 2) In bfloat16 for (a), we have $A[E_Y, F]$ so each device holds an array of shape bfloat16[512, 8192] which has 512 * 8192 * 2 = 8.4MB. The total array has size 2048 * 8192 * 2 = 34MB.
 
-*For part (1)*, we can use the formula above. Since we're performing the AllGather over one axis, we have $T_{\text{comms}} = 34e6 / 1e11 = 340\mu s$. To check that we're not latency-bound, we know over an axis of size 4, we'll have at most 3 hops, so our latency bound is something like 3us, so we're not close. However, TPU v5e only has a wraparound connection when one axis has size 16, so here *we actually can't do a fully bidirectional AllGather*. We have to do 3 hops for data from the edges to reach the other edge, so in theory we have more like $T_{\text{comms}} = 3 * 8.4e6 / 5e10 = 504\mu s$. [**Here's**](https://imgur.com/a/RkvpRGQ) **an actual profile** from [this Colab](https://colab.research.google.com/drive/15tDZMfNqm2vJjvSzw5VC9qtSwc5td-oV?usp=sharing), which shows $680 \mu s$, which is reasonable since we're likely not getting 100% of the theoretical bandwidth! *For part (2)* each shard has size `64 * 256 * 2 = 32kB. 32e3 / 5e10 = 0.6us`, so we're latency bound. Since we have 3 hops, this will take roughly 3 * 1us = 3us. [In practice, it's closer to 8us.](https://imgur.com/a/HZLQmYs)
+*For part (1)*, we can use the formula above. Since we're performing the AllGather over one axis, we have $T_{\text{comms}} = 34e6 / 1e11 = 340\mu s$. To check that we're not latency-bound, we know over an axis of size 4, we'll have at most 3 hops, so our latency bound is something like 3us, so we're not close. However, TPU v5e only has a wraparound connection when one axis has size 16, so here *we actually can't do a fully bidirectional AllGather*. We have to do 3 hops for data from the edges to reach the other edge, so in theory we have more like $T_{\text{comms}} = 3 * 8.4e6 / 4.5e10 = 560\mu s$. [**Here's**](https://imgur.com/a/RkvpRGQ) **an actual profile** from [this Colab](https://colab.research.google.com/drive/15tDZMfNqm2vJjvSzw5VC9qtSwc5td-oV?usp=sharing), which shows $680 \mu s$, which is reasonable since we're likely not getting 100% of the theoretical bandwidth! *For part (2)* each shard has size `64 * 256 * 2 = 32kB. 32e3 / 4.5e10 = 0.7us`, so we're latency bound. Since we have 3 hops, this will take roughly 3 * 1us = 3us. [In practice, it's closer to 8us.](https://imgur.com/a/HZLQmYs)
 
 {% enddetails %}
 
@@ -543,7 +543,7 @@ Our array is only sharded along X, which has size 4, so effectively each shard h
 
 {% details Click here for the answer. %}
 
-Our array in bfloat16 uses only 256 bytes total, and only 64 per device. Since we have an axis of size 4 on a TPU v4p, we have a wraparound link, so we can do the AllGather by sending half the bytes in each direction, meaning only 32 bytes in each direction. With 4.5e10 of unidirectional bandwidth, each hop would take roughly 32 / 4.5e10 ~ 0, so we're definitely latency bound. Counting the number of hops, we can do the full gather in only 2 hops, so roughly 2us a good estimate.
+Our array in bfloat16 uses only 256 bytes total, and only 64 per device. Since we have an axis of size 4 on a TPU v4p, we have a wraparound link, so we can do the AllGather by sending half the bytes in each direction, meaning only 32 bytes in each direction. With `4.5e10` of unidirectional bandwidth, each hop would take roughly `32 / 4.5e10 ~ 0`, so we're definitely latency bound. Counting the number of hops, we can do the full gather in only 2 hops, so roughly 2us a good estimate.
 
 {% enddetails %}
 

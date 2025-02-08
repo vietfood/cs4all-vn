@@ -264,7 +264,7 @@ T &\approx \max\left(\frac{4 \cdot B \cdot D \cdot F}{X \cdot C}, \frac{4 \cdot 
 T &\approx 4 \cdot D \cdot F \cdot \max\left(\frac{B}{X \cdot C}, \frac{1}{W_\text{ici}}\right)
 \end{aligned}$$
 
-Therefore, as with pure data-parallelism, we are compute bound when $$B / X > C / W_\text{ici}$$, i.e. when the per-device batch size $B/X$ exceeds the "ICI operational intensity" $C/W_\text{ici}$ (2550 for v5p). This is great for us, because it means if our per-device batch size is big enough to be compute-bound for pure data-parallelism, we can — without worrying about leaving the compute-bound regime — simply upgrade to FSDP, saving ourselves a massive amount of parameter and optimizer state memory!  Though we did have to add communication to the forward pass, this cost is immaterial since it just overlaps with forward-pass FLOPs. 
+Therefore, as with pure data-parallelism, we are compute bound when $$B / X > C / W_\text{ici}$$, i.e. when the per-device batch size $B/X$ exceeds the "ICI operational intensity" $C/W_\text{ici}$ (`4.59e14 / 1.8e11 = 2550` for v5p). This is great for us, because it means if our per-device batch size is big enough to be compute-bound for pure data-parallelism, we can — without worrying about leaving the compute-bound regime — simply upgrade to FSDP, saving ourselves a massive amount of parameter and optimizer state memory!  Though we did have to add communication to the forward pass, this cost is immaterial since it just overlaps with forward-pass FLOPs. 
 
 <p markdown=1 class="takeaway">**Takeaway:** both FSDP and pure data parallelism become bandwidth bound on TPUv5 when the batch size per device is less than $2550 / n_\text{axes}$.</p>
 

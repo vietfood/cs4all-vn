@@ -193,9 +193,9 @@ Host size refers to the topology of TPUs connected to a single host (e.g. TPU v5
 | :---------- | :----------------------------: | :-------------------------: |
 | **TPU v3**  |              1e11              |            2e11             |
 | **TPU v4p** |             4.5e10             |            9e10             |
-| **TPU v5p** |              1e11              |            2e11             |
-| **TPU v5e** |              5e10              |            1e11             |
-| **TPU v6e** |              1e11              |            2e11             |
+| **TPU v5p** |              9e10              |           1.8e11            |
+| **TPU v5e** |             4.5e10             |            9e10             |
+| **TPU v6e** |              9e10              |           1.8e11            |
 
 We include both one-way (unidirectional) bandwidth and bidi (bidirectional) bandwidth since unidirectional bandwidth is more true to the hardware but bidirectional bandwidth occurs more often in equations involving a full ring.<d-footnote>By bidi (bidirectional) bandwidth we mean the total bytes that can be sent along a single link in both directions, or equally, the total number of outgoing bytes from a single TPU along a particular axis, assuming we can use both links efficiently. This is true when we have a functioning ring, AKA when we have a wraparound connection on the particular axis. This occurs on inference chips when we have a full 16 axis, or on training chips (v*p) when we have an axis which is a multiple of 4. We prefer to use the bidirectional bandwidth because it appears frequently in calculations involving bidirectional comms.</d-footnote>
 
@@ -284,7 +284,7 @@ Now let's work through how long each piece will take:
 
 1. **PCIe load**: we're loading chunks of 16GB / 2 = 8GB over 8 PCIe links, each of which has `1.5e10` bytes/second bandwidth. Thus this will take about 66ms.
 
-2. **ICI copy:** each TPU now has 16GB / 16 = 1GB of our array. Our ICI bandwidth is 10e10 bytes/second per link *bidirectional*, and you'll notice from the above diagram that only 2 of the 4 ICI links on the TPU v5e are in use in this topology. Since TPU{0,0} needs to receive a total of 15GB along 2 axes at `5e10` bytes/s/link, we can lower bound the time by `15e9 / (5e10 * 2) = 150ms`. In practice this probably isn't achievable because the load is very uneven, but it's probably within a factor of 2. As you'll see in Section 2, performing a full AllGather would also take roughly `16e9 / (5e10 * 2)`, so this is close to optimal.
+2. **ICI copy:** each TPU now has 16GB / 16 = 1GB of our array. Our ICI bandwidth is 10e10 bytes/second per link *bidirectional*, and you'll notice from the above diagram that only 2 of the 4 ICI links on the TPU v5e are in use in this topology. Since TPU{0,0} needs to receive a total of 15GB along 2 axes at `4.5e10` bytes/s/link, we can lower bound the time by `15e9 / (4.5e10 * 2) = 167ms`. In practice this probably isn't achievable because the load is very uneven, but it's probably within a factor of 2. As you'll see in Section 2, performing a full AllGather would also take roughly `16e9 / (4.5e10 * 2)`, so this is close to optimal.
 
 3. **HBM $\rightarrow$ MXU load:** to perform our final matmul, we need to load these 16e9 bytes plus the bf16[8, 128 \* 1024] array (another 2MB, so negligible) over HBM bandwidth into the MXU, which will take `16e9 / 8.1e11 = 19ms`.
 
@@ -318,7 +318,7 @@ At the core of the TPU MXU is a `128x128` systolic array (`256x256` on TPU v6e).
 * At its core, the systolic array is a 2D `128x128` (`=16,384`) grid of ALUs each capable of performing a multiply and add operation. 
 * Weights (**W**, the `128x128` input) are passed down from above (called the RHS) while inputs (**X**, the `8x128` input) are passed in from the left (called the LHS).
 
-Here is a simplified animation of multiplying a set of weights (blue) with a set of activations (green). You'll notice that the weights (RHS) are partially loaded first, diagonally, and then the activations are fed in, also diagonally. In each frame above, we multiply all the overlapped green and blue units, sum the result with any residual passed in from above, and then pass the result in turn down one unit.
+Here is a simplified animation of multiplying a set of weights (blue) with a set of activations (green). You'll notice that the weights (RHS) are partially loaded first, diagonally, and then the activations are fed in, also diagonally. In each frame below, we multiply all the overlapped green and blue units, sum the result with any residual passed in from above, and then pass the result in turn down one unit.
 
 {% include figure.liquid path="assets/img/systolic-array.gif" %}
 
