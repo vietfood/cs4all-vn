@@ -492,19 +492,19 @@ Note that ReduceScatter *introduces* a sharded dimension, and so has a natural f
 
 {% include figure.liquid path="assets/img/all-collectives.png" class="img-fluid" %}
 
-* The cost and latency of each of these operations **doesn't depend on the size of the axis (as long as they're bandwidth bound)**, but only on the size of the input arrays and the bandwidth of the link.
+* The cost and latency of each of these operations **doesn't depend on the size of the axis (as long as they're bandwidth bound)**, but only on the size of the input arrays and the bandwidth of the link. For a unidirectional AllGather/ReduceScatter:
 
 $$T_{\text{comm per AllGather or ReduceScatter}} = \frac{\text{Data volume}}{\text{bandwidth}} \cdot \frac{\text{Axis} - 1}{\text{Axis}}
 \longrightarrow \frac{\text{Data volume}}{\text{bandwidth (bidirectional)}}$$
 
 * An AllReduce is composed of a ReduceScatter followed by an AllGather, and thus has 2x the above cost. An AllToAll only has to pass shards part-way around the ring and is thus ¼ the cost of an AllGather. Here's a summary:
 
-| Operation         | Description                                                                                                        | Syntax                                | Runtime                                          |
-| :---------------- | :----------------------------------------------------------------------------------------------------------------- | :------------------------------------ | :----------------------------------------------- |
-| **AllGather**     | Gathers all the shards of a sharded array along an axis, removing a subscript.                                     | $[A_X, B] \to [A, B]$                 | bytes / (bidirectional ICI bandwidth * num_axes) |
-| **ReduceScatter** | Sums a partially summed array along an axis and shards it along another axis (adding a subscript).                 |  $[A, B] \\{U_X\\} \to [A_X, B]$      | Same as AllGather                                |
-| **AllReduce**     | Sums a partially summed array along an axis. Removes a { U<sub>x</sub> }. Combines an AllGather and ReduceScatter. | $[A_X, B]\\{U_Y\\} \to [A_X, B]$      | 2 * AllGather                                    |
-| **AllToAll**      | Gathers (replicates) an axis and shards a different dimension along the same axis.                                 | $[A, B_X] \to [A_X, B]$               | AllGather / 4 for a bidirectional ring           |
+| Operation         | Description                                                                                                        | Syntax                           | Runtime                                          |
+| :---------------- | :----------------------------------------------------------------------------------------------------------------- | :------------------------------- | :----------------------------------------------- |
+| **AllGather**     | Gathers all the shards of a sharded array along an axis, removing a subscript.                                     | $[A_X, B] \to [A, B]$            | bytes / (bidirectional ICI bandwidth * num_axes) |
+| **ReduceScatter** | Sums a partially summed array along an axis and shards it along another axis (adding a subscript).                 | $[A, B] \\{U_X\\} \to [A_X, B]$  | Same as AllGather                                |
+| **AllReduce**     | Sums a partially summed array along an axis. Removes a { U<sub>x</sub> }. Combines an AllGather and ReduceScatter. | $[A_X, B]\\{U_Y\\} \to [A_X, B]$ | 2 * AllGather                                    |
+| **AllToAll**      | Gathers (replicates) an axis and shards a different dimension along the same axis.                                 | $[A, B_X] \to [A_X, B]$          | AllGather / 4 for a bidirectional ring           |
 
 * Note that we use the bidirectional bandwidth above, while the numbers reported in Section (1) are unidirectional.
 
