@@ -29,6 +29,25 @@ If you see any issues or have questions, please leave a comment on the website i
 
 To contribute on GitHub you will need to sign a Google "Contributor License Agreement" (CLA). You can do that here: https://cla.developers.google.com/clas.
 
+### Citation
+
+For attribution in academic contexts, please cite this work as
+
+```Austin et al., "How to Scale Your Model", Google DeepMind, online, 2025.```
+
+BibTeX citation
+
+```
+@article{scaling-book,
+  title = {How to Scale Your Model},
+  author = {Austin, Jacob and Douglas, Sholto and Frostig, Roy and Levskaya, Anselm and Chen, Charlie and Vikram, Sharad and Lebron, Federico and Choy, Peter and Ramasesh, Vinay and Webson, Albert and Pope, Reiner},
+  publisher = {Google DeepMind},
+  howpublished = {Online},
+  note = {Retrieved from https://jax-ml.github.io/scaling-book/},
+  year = {2025}
+}
+```
+
 ![dragon](assets/img/dragon.png)
 
 *This book was originally called "How To Scale Your Dragon", after the Dreamworks film, hence the dragon imagery.*
