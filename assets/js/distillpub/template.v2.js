@@ -482,7 +482,7 @@
   };
 
   var math =
-    '/*\n * Copyright 2018 The Distill Template Authors\n *\n * Licensed under the Apache License, Version 2.0 (the "License");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *      http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an "AS IS" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n */\n\nspan.katex-display {\n  text-align: left;\n  padding: 8px 0 8px 0;\n  margin: 0.5em 0 0.5em 1em;\n}\n\nspan.katex {\n  -webkit-font-smoothing: antialiased;\n  color: var(--global-text-color);\n  font-size: 1.18em;\n}\n';
+    '/*\n * Copyright 2018 The Distill Template Authors\n *\n * Licensed under the Apache License, Version 2.0 (the "License");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *      http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an "AS IS" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n */\n\nspan.katex-display {\n  text-align: left;\n  padding: 8px 0 8px 0;\n  margin: 0.5em 0 0.5em 1em;\n}\n\nspan.katex {\n  -webkit-font-smoothing: antialiased;\n;\n  font-size: 1.18em;\n}\n\n';
 
   // Copyright 2018 The Distill Template Authors
   //
@@ -715,7 +715,7 @@ ${katexCSSTag}
 ${math}
 </style>
 <span id='katex-container'></span>
-`
+`,
   );
 
   // DMath, not Math, because that would conflict with the JS built-in
@@ -1503,7 +1503,7 @@ ${math}
 `
   );
 
-  class Abstract extends T$1(HTMLElement) {}
+  class Abstract extends T$1(HTMLElement) { }
 
   // Copyright 2018 The Distill Template Authors
 
@@ -1572,7 +1572,7 @@ d-appendix > distill-appendix {
     false
   );
 
-  class Appendix extends T$2(HTMLElement) {}
+  class Appendix extends T$2(HTMLElement) { }
 
   // Copyright 2018 The Distill Template Authors
   //
@@ -1612,7 +1612,7 @@ d-appendix > distill-appendix {
                   if (!isOnlyWhitespace.test(text)) {
                     console.warn(
                       "Use of unwrapped text in distill articles is discouraged as it breaks layout! Please wrap any text in a <span> or <p> tag. We found the following text: " +
-                        text
+                      text
                     );
                     const wrapper = document.createElement("span");
                     wrapper.innerHTML = addedNode.nodeValue;
@@ -2085,8 +2085,8 @@ d-appendix > distill-appendix {
           </p>
         <p class="affiliation" style="grid-column: 3; grid-row: ${index % half + 2};">
         ${author.affiliations.map(affiliation =>
-          affiliation.url ? `<a class="affiliation" href="${affiliation.url}">${affiliation.name}</a>` : `<span class="affiliation">${affiliation.name}</span>`
-        ).join(', ')}
+      affiliation.url ? `<a class="affiliation" href="${affiliation.url}">${affiliation.name}</a>` : `<span class="affiliation">${affiliation.name}</span>`
+    ).join(', ')}
         </p>
         `).join('')}
       </div>
@@ -2137,6 +2137,10 @@ d-appendix > distill-appendix {
   position: relative;
   top: -2px;
   margin: 0 2px;
+}
+
+d-hover-box ul {
+  color: black;
 }
 
 figcaption .citation-number {
@@ -2264,9 +2268,9 @@ ul li:last-of-type {
       if (!this.hoverBox) return;
       this.hoverBox.innerHTML = `<ul>
       ${entries
-        .map(hover_cite)
-        .map((html) => `<li>${html}</li>`)
-        .join("\n")}
+          .map(hover_cite)
+          .map((html) => `<li>${html}</li>`)
+          .join("\n")}
     </ul>`;
     }
   }
@@ -2554,7 +2558,7 @@ d-footnote-list a.footnote-backlink {
       super();
     }
 
-    connectedCallback() {}
+    connectedCallback() { }
 
     listen(element) {
       // console.log(element)
@@ -2684,7 +2688,7 @@ d-references {
     false
   );
 
-  class References extends T$8(HTMLElement) {}
+  class References extends T$8(HTMLElement) { }
 
   // Copyright 2018 The Distill Template Authors
   //
@@ -3248,7 +3252,7 @@ p small {
     return prototype;
   }
 
-  function Color() {}
+  function Color() { }
 
   var darker = 0.7;
   var brighter = 1 / darker;
@@ -3455,11 +3459,11 @@ p small {
               ? rgba((m >> 24) & 0xff, (m >> 16) & 0xff, (m >> 8) & 0xff, (m & 0xff) / 0xff) // #ff000000
               : l === 4
                 ? rgba(
-                    ((m >> 12) & 0xf) | ((m >> 8) & 0xf0),
-                    ((m >> 8) & 0xf) | ((m >> 4) & 0xf0),
-                    ((m >> 4) & 0xf) | (m & 0xf0),
-                    (((m & 0xf) << 4) | (m & 0xf)) / 0xff
-                  ) // #f000
+                  ((m >> 12) & 0xf) | ((m >> 8) & 0xf0),
+                  ((m >> 8) & 0xf) | ((m >> 4) & 0xf0),
+                  ((m >> 4) & 0xf) | (m & 0xf0),
+                  (((m & 0xf) << 4) | (m & 0xf)) / 0xff
+                ) // #f000
                 : null) // invalid hex
       : (m = reRgbInteger.exec(format))
         ? new Rgb(m[1], m[2], m[3], 1) // rgb(255, 0, 0)
@@ -3863,8 +3867,8 @@ p small {
     return (y = +y) === 1
       ? nogamma
       : function (a, b) {
-          return b - a ? exponential(a, b, y) : constant(isNaN(a) ? b : a);
-        };
+        return b - a ? exponential(a, b, y) : constant(isNaN(a) ? b : a);
+      };
   }
 
   function nogamma(a, b) {
@@ -4041,22 +4045,22 @@ p small {
     return b == null || t === "boolean"
       ? constant(b)
       : (t === "number"
-          ? interpolateNumber
-          : t === "string"
-            ? (c = color(b))
-              ? ((b = c), rgb$1)
-              : string
-            : b instanceof color
-              ? rgb$1
-              : b instanceof Date
-                ? date
-                : isNumberArray(b)
-                  ? numberArray
-                  : Array.isArray(b)
-                    ? genericArray
-                    : (typeof b.valueOf !== "function" && typeof b.toString !== "function") || isNaN(b)
-                      ? object
-                      : interpolateNumber)(a, b);
+        ? interpolateNumber
+        : t === "string"
+          ? (c = color(b))
+            ? ((b = c), rgb$1)
+            : string
+          : b instanceof color
+            ? rgb$1
+            : b instanceof Date
+              ? date
+              : isNumberArray(b)
+                ? numberArray
+                : Array.isArray(b)
+                  ? genericArray
+                  : (typeof b.valueOf !== "function" && typeof b.toString !== "function") || isNaN(b)
+                    ? object
+                    : interpolateNumber)(a, b);
   }
 
   function interpolateRound(a, b) {
@@ -4088,8 +4092,8 @@ p small {
   function normalize(a, b) {
     return (b -= a = +a)
       ? function (x) {
-          return (x - a) / b;
-        }
+        return (x - a) / b;
+      }
       : constant$1(isNaN(b) ? NaN : 0.5);
   }
 
@@ -4395,9 +4399,9 @@ p small {
 
   function formatLocale(locale) {
     var group =
-        locale.grouping === undefined || locale.thousands === undefined
-          ? identity$1
-          : formatGroup(map.call(locale.grouping, Number), locale.thousands + ""),
+      locale.grouping === undefined || locale.thousands === undefined
+        ? identity$1
+        : formatGroup(map.call(locale.grouping, Number), locale.thousands + ""),
       currencyPrefix = locale.currency === undefined ? "" : locale.currency[0] + "",
       currencySuffix = locale.currency === undefined ? "" : locale.currency[1] + "",
       decimal = locale.decimal === undefined ? "." : locale.decimal + "",
@@ -4714,11 +4718,11 @@ p small {
           if (date >= date) {
             if (step < 0)
               while (++step <= 0) {
-                while ((offseti(date, -1), !test(date))) {} // eslint-disable-line no-empty
+                while ((offseti(date, -1), !test(date))) { } // eslint-disable-line no-empty
               }
             else
               while (--step >= 0) {
-                while ((offseti(date, +1), !test(date))) {} // eslint-disable-line no-empty
+                while ((offseti(date, +1), !test(date))) { } // eslint-disable-line no-empty
               }
           }
         }
@@ -4739,14 +4743,14 @@ p small {
           : !(step > 1)
             ? interval
             : interval.filter(
-                field
-                  ? function (d) {
-                      return field(d) % step === 0;
-                    }
-                  : function (d) {
-                      return interval.count(0, d) % step === 0;
-                    }
-              );
+              field
+                ? function (d) {
+                  return field(d) % step === 0;
+                }
+                : function (d) {
+                  return interval.count(0, d) % step === 0;
+                }
+            );
       };
     }
 
@@ -4909,15 +4913,15 @@ p small {
     return !isFinite((k = Math.floor(k))) || !(k > 0)
       ? null
       : newInterval(
-          function (date) {
-            date.setFullYear(Math.floor(date.getFullYear() / k) * k);
-            date.setMonth(0, 1);
-            date.setHours(0, 0, 0, 0);
-          },
-          function (date, step) {
-            date.setFullYear(date.getFullYear() + step * k);
-          }
-        );
+        function (date) {
+          date.setFullYear(Math.floor(date.getFullYear() / k) * k);
+          date.setMonth(0, 1);
+          date.setHours(0, 0, 0, 0);
+        },
+        function (date, step) {
+          date.setFullYear(date.getFullYear() + step * k);
+        }
+      );
   };
 
   var utcMinute = newInterval(
@@ -5025,15 +5029,15 @@ p small {
     return !isFinite((k = Math.floor(k))) || !(k > 0)
       ? null
       : newInterval(
-          function (date) {
-            date.setUTCFullYear(Math.floor(date.getUTCFullYear() / k) * k);
-            date.setUTCMonth(0, 1);
-            date.setUTCHours(0, 0, 0, 0);
-          },
-          function (date, step) {
-            date.setUTCFullYear(date.getUTCFullYear() + step * k);
-          }
-        );
+        function (date) {
+          date.setUTCFullYear(Math.floor(date.getUTCFullYear() / k) * k);
+          date.setUTCMonth(0, 1);
+          date.setUTCHours(0, 0, 0, 0);
+        },
+        function (date, step) {
+          date.setUTCFullYear(date.getUTCFullYear() + step * k);
+        }
+      );
   };
 
   function localDate(d) {
@@ -5737,7 +5741,7 @@ p small {
 
   var parseIso = +new Date("2000-01-01T00:00:00.000Z") ? parseIsoNative : utcParse(isoSpecifier);
 
-  var noop = { value: function () {} };
+  var noop = { value: function () { } };
 
   function dispatch() {
     for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
@@ -5861,14 +5865,14 @@ p small {
     return (fullname.local ? creatorFixed : creatorInherit)(fullname);
   }
 
-  function none() {}
+  function none() { }
 
   function selector(selector) {
     return selector == null
       ? none
       : function () {
-          return this.querySelector(selector);
-        };
+        return this.querySelector(selector);
+      };
   }
 
   function selection_select(select) {
@@ -5894,8 +5898,8 @@ p small {
     return selector == null
       ? empty
       : function () {
-          return this.querySelectorAll(selector);
-        };
+        return this.querySelectorAll(selector);
+      };
   }
 
   function selection_selectAll(select) {
@@ -6106,12 +6110,12 @@ p small {
   function selection_merge(selection) {
     for (
       var groups0 = this._groups,
-        groups1 = selection._groups,
-        m0 = groups0.length,
-        m1 = groups1.length,
-        m = Math.min(m0, m1),
-        merges = new Array(m0),
-        j = 0;
+      groups1 = selection._groups,
+      m0 = groups0.length,
+      m1 = groups1.length,
+      m = Math.min(m0, m1),
+      merges = new Array(m0),
+      j = 0;
       j < m;
       ++j
     ) {
@@ -6130,8 +6134,8 @@ p small {
   }
 
   function selection_order() {
-    for (var groups = this._groups, j = -1, m = groups.length; ++j < m; ) {
-      for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0; ) {
+    for (var groups = this._groups, j = -1, m = groups.length; ++j < m;) {
+      for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0;) {
         if ((node = group[i])) {
           if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
           next = node;
@@ -6308,8 +6312,8 @@ p small {
   function selection_style(name, value, priority) {
     return arguments.length > 1
       ? this.each(
-          (value == null ? styleRemove : typeof value === "function" ? styleFunction : styleConstant)(name, value, priority == null ? "" : priority)
-        )
+        (value == null ? styleRemove : typeof value === "function" ? styleFunction : styleConstant)(name, value, priority == null ? "" : priority)
+      )
       : styleValue(this.node(), name);
   }
 
@@ -7429,7 +7433,7 @@ distill-header .nav a {
 
   const T$b = Template("distill-header", headerTemplate, false);
 
-  class DistillHeader extends T$b(HTMLElement) {}
+  class DistillHeader extends T$b(HTMLElement) { }
 
   // Copyright 2018 The Distill Template Authors
 
@@ -7584,7 +7588,7 @@ distill-header .nav a {
 
   const T$c = Template("distill-footer", footerTemplate);
 
-  class DistillFooter extends T$c(HTMLElement) {}
+  class DistillFooter extends T$c(HTMLElement) { }
 
   // Copyright 2018 The Distill Template Authors
 
