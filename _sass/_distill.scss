@@ -343,6 +343,8 @@ mjx-container {
   grid-column: text;
 }
 
-.appendix-entry {
-  margin-bottom: 20px;
+@media (min-width: 768px) {
+  .appendix-entry {
+    margin-bottom: 20px;
+  }
 }
