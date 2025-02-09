@@ -62,6 +62,8 @@ toc:
   - name: "Tricks for Improving Generation Throughput and Latency"
   - name: "Distributing Inference Over Multiple Accelerators"
   - subsections:
+    - name: "Prefill"
+    - name: "Generation"
     - name: "Sharding the KV cache"
   - name: "Designing an Effective Inference Engine"
   - subsections:
@@ -233,7 +235,7 @@ As you can see, there's a clear tradeoff between throughput and latency here. Sm
 
 Not only do we trade off latency and throughput with batch size as knob, we may also prefer a larger topology to a smaller one so we can fit larger batches if we find ourselves limited by HBM. The [next section](../applied-inference) explores this in more detail.
 
-<p markdown=1 class="takeaway">**Takeaway:** iff you care about generation throughput, use the largest per-chip batch size possible. Any per-chip batch size above the TPU arithmetic intensity ($B_\text{crit}$, usually 120 or 240) will maximize throughput. You may need to increase your topology to achieve this. Smaller batch sizes will allow you to improve latency at the cost of throughput.</p>
+<p markdown=1 class="takeaway">**Takeaway:** if you care about generation throughput, use the largest per-chip batch size possible. Any per-chip batch size above the TPU arithmetic intensity ($B_\text{crit}$, usually 120 or 240) will maximize throughput. You may need to increase your topology to achieve this. Smaller batch sizes will allow you to improve latency at the cost of throughput.</p>
 
 {% details There are some caveats to this from a hardware standpoint. Click here for some nits. %}
 
@@ -247,7 +249,8 @@ This is all quite theoretical. In practice we often don't quite see a sharp roof
 
 ### What about memory?
 
-We've spent some time looking at bandwidth and FLOPs, but not at memory. KV caches change the memory picture as well! Let's pick a real model (LLaMA 2-13B) to see how the theory above plays out:
+We've spent some time looking at bandwidth and FLOPs, but not at memory. The memory picture looks a lot different at inference time, thanks to our new data structure, the KV cache. For this section, let's pick a real model (LLaMA 2-13B) to demonstrate how different things look:
+
 
 | hyperparam               | value  |
 | ------------------------ | ------ |
@@ -259,7 +262,7 @@ We've spent some time looking at bandwidth and FLOPs, but not at memory. KV cach
 | d\_qkv (H)               | 128    |
 | n\_embeddings (V)        | 32,000 |
 
-Briefly, to count our parameters, we have:
+What's using memory during inference? Well, obviously, our parameters. Counting those, we have:
 
 | param            | formula                                                                                                                   | size (in bytes)                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -267,9 +270,9 @@ Briefly, to count our parameters, we have:
 | Vocab params     | 2 (input and output embeddings) x n\_embeddings x d\_model                                                                | 2 x 32,000 x 5,120 \= **0.3e9**                                   |
 | Attention params | \[2 (*q and output*) x d\_model x n\_heads x d\_qkv \+ 2 (*for k and v*) x d\_model x n\_kv\_heads x d\_qkv\] x n\_layers | (2 x 5,120 x 40 x 128 \+ 2 x 5,120 x 40 x 128\) x 40 \= **4.2e9** |
 
-Adding these parameters up, we get 8.5e9 \+ 4.2e9 \+ 0.3e9 \= **13e9 total parameters**, just as expected. As we saw in the previous section, during training, a 13B dense model might use 40GB for parameters (mixed bf16 and fp32), 100GB for optimizer state in fp32, and around 2.5TB of activations. And this is only checkpointing once per layer, which is already somewhat wasteful. During training, activations dominate, even with aggressive rematerialization.
+Adding these parameters up, we get 8.5e9 + 4.2e9 + 0.3e9 = **13e9 total parameters**, just as expected. As we saw in the previous sections, during training we might store our parameters in bfloat16 with an optimizer state in float32. That may use around 100GB of memory. That pales in comparison to our gradient checkpoints, which can use several TBs.
 
-**How is inference different?** During inference, we store one copy of our parameters, let's say in bf16. That uses 26GB — in practice we can often do better with quantization. There's no optimizer state or gradients to keep track of. Because we don't checkpoint (keep activations around for the backwards pass), our activation footprint is negligible for both prefill<d-footnote>It is possible to see larger activations during attention without flash attention, but it's still much smaller than other tensors. Once the engineering investment is made this is moot.</d-footnote> and generate. If we prefill 8k tokens, a single activation only uses around 8k x 5120 x 2 bytes \= 80MB of memory. Longer prefills can be broken down into many smaller forward passes, so it's not a problem for longer contexts either. Generation use even fewer tokens than that, so activations are negligible.
+**How is inference different?** During inference, we store one copy of our parameters, let's say in bfloat16. That uses 26GB — and in practice we can often do much better than this with quantization. There's no optimizer state or gradients to keep track of. Because we don't checkpoint (keep activations around for the backwards pass), our activation footprint is negligible for both prefill<d-footnote>Particularly thanks to Flash Attention, which avoids materializing our attention matrix</d-footnote> and generate. If we prefill 8k tokens, a single activation only uses around `8,192 x 5,120 x 2 bytes = 80MB` of memory. Longer prefills can be broken down into many smaller forward passes, so it's not a problem for longer contexts either. Generation use even fewer tokens than that, so activations are negligible.
 
 **The main difference is the KV cache**. These are the keys and value projections for all past tokens, bounded in size only by the maximum allowed sequence length. The total size for $$T$$ tokens is
 
@@ -277,11 +280,11 @@ $$\text{KV cache size} = 2 \cdot \text{bytes per float} \cdot H \cdot K \cdot L 
 
 where $$H$$ is the dimension of each head, $$K$$ is the number of KV heads, $$L$$ is the number of layers, and the 2 comes from storing both the keys and values.
 
-**This can get big very quickly**, even with modest batch size and context lengths. For LLaMA-13B, a KV cache for a single 8192 sequence at bf16 is 
+**This can get big very quickly**, even with modest batch size and context lengths. For LLaMA-13B, a KV cache for a single 8192 sequence at bf16 is
 
 $$8192\ (T) \times 40\ (K) \times 128\ (H) \times 40\ (L) \times 2\ (\text{bytes}) \times 2 = 6.7 \text{GB}$$
 
-**W<sub>in</sub> of these exceed the memory usage of our parameters!** To be clear, LLaMA 2 was not optimized for KV cache size at longer contexts (it isn't always this bad, since usually $$K$$ is much smaller, as in LLaMA-3), but this is still illustrative. We cannot neglect these either in memory or latency estimates.
+**Just 4 of these exceed the memory usage of our parameters!** To be clear, LLaMA 2 was not optimized for KV cache size at longer contexts (it isn't always this bad, since usually $K$ is much smaller, as in LLaMA-3), but this is still illustrative. We cannot neglect these in memory or latency estimates.
 
 ### Modeling throughput and latency for LLaMA 2-13B
 
@@ -340,39 +343,75 @@ Paged Attention<d-cite key="paged"></d-cite> is a refinement upon this that stor
 
 ## Distributing Inference Over Multiple Accelerators
 
-So far we've handwaved how we're scaling beyond a single chip. Following [Section 5](../training), let's explore the different strategies available to us and their tradeoffs.
+So far we've handwaved how we're scaling beyond a single chip. Following [Section 5](../training), let's explore the different strategies available to us and their tradeoffs. As always, we will look at prefill and generation separately.
 
-**Prefill:** from a roofline standpoint, prefill is almost identical to training and almost all the same techniques and tradeoffs apply — Megatron sharding, sequence sharding (for sufficiently long context), pipelining, even FSDP are all viable! Some of these techniques even work better during prefill because you don't have an optimizer or gradients to worry about. You just have to keep the KVs kicking around so you can do generation later. As in training, increasing the number of chips gives us access to more FLOPs/s (for potentially lower TTFT), but adds communication overhead (potentially reducing throughput per chip). 
+### Prefill
 
-Generally, for prefill on a single sequence, we first do some amount of model parallelism (again, up to about $F / \alpha$), then do sequence parallelism (like data parallelism but sharding across the sequence dimension). While sequence parallelism introduces some extra communication in attention, it is typically fairly small at longer contexts. As with training, we can overlap the communication and computation (using collective matmuls for Megatron and ring attention respectively), with increasingly unfavorable ratios as the number of chips scale. Therefore, depending on the width of the model, a moderate amount of model and sequence sharding can be close to free. _Because inference is more latency-sensitive than training, however, we often have to be more careful about perfectly overlapping communication and computation._
+From a roofline standpoint, **prefill is almost identical to training** and almost all the same techniques and tradeoffs apply — model (Megatron) parallelism, sequence sharding (for sufficiently long context), pipelining, even FSDP are all viable! You just have to keep the KVs kicking around so you can do generation later. As in training, increasing the number of chips gives us access to more FLOPs/s (for potentially lower TTFT), but adds communication overhead (potentially reducing throughput per chip).
 
-**Generation:** For generation, increasing the number of chips gives us access to more HBM bandwidth (for potentially better per-step latency) and more HBM (allowing us to increase our batch size and improve throughput). Again, more chips means more communication overhead, so _for a fixed batch size overall throughput per chip will drop as you scale the topology_. As for specific partitioning strategies, generation is much more restrictive than prefill or training:
+**The general rule for sharding prefill:** here's a general set of rules for prefill. We'll assume we're doing prefill on a single sequence only (no batch dimension):
 
-1. **FSDP is impossible.** Since we want to move the parameters and KV caches from HBM to the MXU/GPU TensorCore along the fastest paths possible, we do not want to move them via ICI which are orders of magnitudes slower than HBM. We instead rely on communicating the comparatively small activations. This means methods similar to FSDP are usually completely unviable for generation (accidentally leaving it on after training is an easy and common way to have order of magnitude regressions).
+1. *Model sharding:* We typically do some amount of model parallelism first, up to the point we become ICI-bound. As we saw in [Section 5](../training), this is around $F / 2550$ for 1 axis (usually around 4-8 way sharding).
+2. *Sequence parallelism:* Beyond this, we do sequence parallelism (like data parallelism but sharding across the sequence dimension). While sequence parallelism introduces some extra communication in attention, it is typically fairly small at longer contexts. As with training, we can overlap the communication and computation (using collective matmuls for Megatron and ring attention respectively).
 
-2. **There isn't much reason to do data parallelism.** Data parallelism without FSDP is unhelpful since it duplicates our weights and reduces our per-chip batch size. We end up increasing the footprint of servers for not much gain.
+<p markdown=1 class="takeaway">**Takeaway:** during prefill, almost any sharding that can work during training can work fine. Do model parallelism up to the ICI bound, then do sequence parallelism.</p>
 
-3. **No sequence sharding.** There is no sequence dimension, so no sequence sharding is possible.
+### Generation
 
-_This mostly leaves us with variants of model sharding_ for dense model generation — since HBM bandwidth is at a premium, we prefer to duplicate weights as little as possible. The simplest thing we can do is Megatron sharding (activations fully replicated, weights fully sharded over hidden dimension for the MLP), which works well for smaller topologies. However, since we become comms-bound around 8-16 chips, this doen't give us all that much parallelism to work with. Appendix B talks about some more advanced sharding techniques.
+Generation is a more complicated beast than prefill. For one thing, it is harder to get a large batch size because we need to batch many requests together. Latency targets are lower. Together, these mean we are typically more memory-bound and more sensitive to communication overhead, which restrict our sharding strategies:
 
-For the attention layer, we also model shard attention $$W_Q$$ and $$W_O$$ over heads Megatron style. The KV weights are quite small, and duplicating them is often cheaper than sharding beyond $K$-way sharding.
+1. **FSDP is impossible:** since we are memory-bound in loading our parameters and KV caches from HBM to the MXU, we do not want to move them via ICI which is orders of magnitudes slower than HBM. *We want to move activations rather than weights.* This means methods similar to FSDP are usually completely unviable for generation.<d-footnote>Accidentally leaving it on after training is an easy and common way to have order of magnitude regressions</d-footnote>
 
-<p markdown=1 class="takeaway">**Takeaway:** The main way we shard the model parameters for generation is using variants of model parallelism. Communication moves activations instead of KV caches or parameters, which are larger.</p>
+2. **There is no reason to do data parallelism:** pure data parallelism is unhelpful because it replicates our parameters and doesn't help us load parameters faster. You're better off spinning up multiple copies of the model instead.<d-footnote>By this we mean, spin up multiple servers with copies of the model at a smaller batch size. Data parallelism at the model level is strictly worse.</d-footnote>
+
+3. **No sequence = no sequence sharding.** Good luck sequence sharding.
+
+_This mostly leaves us with variants of model sharding for dense model generation_. As with prefill, the simplest thing we we can do is simple model parallelism (with activations fully replicated, weights fully sharded over hidden dimension for the MLP) up to 4-8 ways when we become ICI bound. However, since we are often memory bandwidth bound, we can actually go beyond this limit to improve latency!
+
+**Note on ICI bounds for generation:** during training we want to be compute-bound, so our rooflines look at when our ICI comms take longer than our FLOPs. However, during generation, if we're memory bandwidth bound by parameter loading, we can increase model sharding beyond this point and improve latency at a minimal throughput cost. More model sharding gives us more HBM to load our weights over, and our FLOPs don't matter. Let's look at how much model parallelism we can do before it becomes the bottleneck.
+
+$$\begin{align*}T_\text{HBM comms} = \frac{2DF}{Y \cdot W_\text{hbm}} && T_\text{ICI comms} = \frac{2BD}{W_\text{ici}}\end{align*}$$
+
+$$T_\text{ICI comms} > T_\text{HBM comms} \rightarrow \frac{W_\text{hbm}}{W_\text{ici}} > \frac{F}{Y \cdot B} \rightarrow Y > F / (B \cdot \beta)$$
+
+where $\beta = W_\text{hbm} / W_\text{ici}$. This number is usually around 8 for TPU v5e and TPU v6e. That means e.g. if $F$ is 16,384 and $B$ is 32, we can in theory do model parallelism up to `16384 / (32 * 8) = 64` ways without a meaningful hit in throughput. This assume we can fully shard our KV caches 64-ways which is difficult: we discuss this below.
+
+For the attention layer, we also model shard attention $$W_Q$$ and $$W_O$$ over heads Megatron style. The KV weights are quite small, and replicating them is often cheaper than sharding beyond $K$-way sharding.
+
+<p markdown=1 class="takeaway">**Takeaway:** our only options during generation are variants of model parallelism. We aim to move activations instead of KV caches or parameters, which are larger. When our batch size is large, we do model parallelism up to the FLOPs-ICI bound ($F / \alpha$). When our batch size is smaller, we can improve latency by model sharding more (at a modest throughput cost). When we want to model shard more ways than we have KV heads, we can shard our KVs along the batch dimension as well.</p>
 
 ### Sharding the KV cache
 
-**We also have an additional data structure that needs to be sharded — the KV cache.** Again, we usually prefer to avoid any replication.
-
-* **Megatron/model sharding:** We can shard the KVs along the head dimension, i.e. $\text{KV}[2, B, S, K_Y, D]$ (where $K$ is the number of KV heads). This is limited to the number of $K/V$ heads, so for models with fewer heads, we shard the head dimension as much as possible, and then shard the KV cache over an additional axis to get to the desired amount of model sharding.
-
-* **GMQA sharding:** GMQA (Grouped MQA), where we have $1 < K < N$, is now a staple inference optimization. We often want to shard the KV cache more than $K$ ways. We can do this by having two model axes — we model shard $$W_Q$$, $$W_O$$ and the MLP over both axes but shard the KV cache heads heads along the first axis and batch along the second axis. This means the KV cache is completely distributed.
-
-{% include figure.liquid path="assets/img/gmqa-sharding.png" class="img-fluid img-small" caption="<b>Figure:</b> comparison of KV cache sharding strategies for (a) MHA sharding over heads, (b) MQA replicating the KV cache, and (c) MQA with batch sharding. GMQA is an interpolation of MHA and MQA, and so we do a combination of the two with two model axes." %}
-
-  <div style="padding-left: 24px; margin-bottom: 20px;">The cost of this is two AllToAlls every attention layer — one to shift the Q activations to the batch sharding so we can compute attention with batch sharding, and one to shift the batch sharded attention output back to pure model sharded.</div>
+**We also have an additional data structure that needs to be sharded — the KV cache.** Again, we almost always prefer to avoid replicating the cache, since it is the primary source of attention latency. To do this, we first Megatron-shard the KVs along the head dimension. This is limited to $K$-way sharding, so for models with a small number of heads, we shard the head dimension as much as possible and then shard along the batch dimension, i.e. $\text{KV}[2, B_Z, S, K_Y, H]$. This means the KV cache is completely distributed.
 
 {% include figure.liquid path="assets/img/esta-figure.png" class="img-fluid" caption="<b>Figure:</b> comparison of the attention mechanism with (a) Multi head attention with pure model sharding and (b) Multiquery attention with batch sharding of the KV cache. Notice how we need two extra AllToAlls to shift the activations from model sharding to batch sharding, so they can act on the KV caches." %}
+
+The cost of this is two AllToAlls every attention layer — one to shift the Q activations to the batch sharding so we can compute attention with batch sharding, and one to shift the batch sharded attention output back to pure model sharded.
+
+{% details Here's the full algorithm! %}
+
+Here we'll write out the full attention algorithm with model parallelism over both $Y$ and $Z$. I apologize for using $K$ for both the key tensor and the KV head dimension. Let $M=N/K$.
+
+<div markdown=1 class="algorithm">
+
+1. X[B, D] = ... (existing activations, unsharded from previous layer)
+2. K[B<sub>Z</sub>, S, K<sub>Y</sub>, H], V[B<sub>Z</sub>, S, K, H] = ... (existing KV cache, batch sharded)
+3. Q[B, N<sub>YZ</sub>, H] = X[B, D] \* W<sub>Q</sub>[D, N<sub>YZ</sub>, H]
+4. Q[B<sub>Z</sub>, N<sub>Y</sub>, H] = **AllToAll**<sub>Z->B</sub>(Q[B, N<sub>YZ</sub>, H])
+5. Q[B<sub>Z</sub>, K<sub>Y</sub>, M, H] = **Reshape**(Q[B<sub>Z</sub>, N<sub>Y</sub>, H])
+6. O[B<sub>Z</sub>, S, K<sub>Y</sub>, M] = Q[B<sub>Z</sub>, K<sub>Y</sub>, M, H] \*<sub>H</sub> K[B<sub>Z</sub>, S, K<sub>Y</sub>, H]
+7. O[B<sub>Z</sub>, S, K, M] = **Softmax**<sub>S</sub>(O[B<sub>Z</sub>, S, K<sub>Y</sub>])
+8. O[B<sub>Z</sub>, K<sub>Y</sub>, M, H] = O[B<sub>Z</sub>, S, K, M] \*<sub>S</sub> V[B<sub>Z</sub>, S, K<sub>Y</sub>, H]
+9. O[B, K<sub>Y</sub>, M<sub>Z</sub>, H] = **AllToAll**<sub>Z->M</sub>(O[B<sub>Z</sub>, K<sub>Y</sub>, M, H])
+10. O[B, N<sub>YZ</sub>, H] = **Reshape**(O[B, K<sub>Y</sub>, M<sub>Z</sub>, H])
+11. X[B, D] {U<sub>YZ</sub>} = W<sub>O</sub>[N<sub>YZ</sub>, H, D] \*<sub>N,H</sub> O[B, N<sub>YZ</sub>, H]
+12. X[B, D] = **AllReduce**(X[B, D] { U<sub>YZ</sub>})
+
+This is pretty complicated but you can see generally how it works. The new comms are modestly expensive since they operate on our small activations, while in return we save a huge amount of memory bandwidth loading the KVs (which are stationary).
+
+</div>
+
+{% enddetails %}
 
 * **Sequence sharding:** If the batch size is too small, or the context is long, we can sequence shard the KV cache. Again, we pay a collective cost in accumulating the attention across shards here. First we need to AllGather the Q activations, and then accumulate the KVs in a similar fashion to Flash Attention.
 
@@ -591,7 +630,7 @@ For large B, the wall clock stays relatively constant because as you add more ch
 
 Because of the relatively low amounts of data being moved during latency optimized inference, collectives on activations are often bound by the latency term (especially for small batch sizes). One can visualise the latency quite easily, by counting the number of hops we need to complete before it is completed.
 
-On TPUs, if the tensor size-dependent part of communication is less than 1 microsecond per hop (a hop is communication between two adjacent devices) we can be bottlenecked by the fixed overhead of actually dispatching the collective. With `5e10` unidirectional ICI bandwidth, ICI communication becomes latency bound when: $$(\text{bytes} / n_\text{shards}) / 5e10 < 1e-6$$. For 8-way Megatron sharding, this is when `buffer_size < 400kB`. **This actually is not that small during inference:** with `BS=16` and `D=8192` in int8, our activations will use `16*8192=131kB`, so we're already latency bound.
+On TPUs, if the tensor size-dependent part of communication is less than 1 microsecond per hop (a hop is communication between two adjacent devices) we can be bottlenecked by the fixed overhead of actually dispatching the collective. With `4.5e10` unidirectional ICI bandwidth, ICI communication becomes latency bound when: $$(\text{bytes} / n_\text{shards}) / 4.5e10 < 1e-6$$. For 8-way Megatron sharding, this is when `buffer_size < 360kB`. **This actually is not that small during inference:** with `BS=16` and `D=8192` in int8, our activations will use `16*8192=131kB`, so we're already latency bound.
 
 <p markdown=1 class="takeaway">**Takeaway:** our comms become latency bound when $$\text{total bytes} < W_{ICI} \times 1e-6$$. For instance, with model parallelism over $$Y$$, we become bound in int8 when $$Y > BD / 45,000$$.</p>
 
