@@ -251,7 +251,7 @@ You'll remember (from [Section 3](../sharding)) that an AllReduce can be decompo
 
 {% enddetails %}
 
-This is also called "ZeRO Sharding", from "ZeRo Overhead sharding" since we don't perform any unnecessary compute or store any unnecessary state. ZeRO-{1,2,3} are used to refer to sharding the weights, gradients and optimizer states in this way, respectively. Since all have the same communication cost, we can basically always do Zero-3 sharding, which shards the parameters, gradients, and optimizer states across a set of devices.
+This is also called "ZeRO Sharding", from "ZeRo Overhead sharding" since we don't perform any unnecessary compute or store any unnecessary state. ZeRO-{1,2,3} are used to refer to sharding the optimizer states, gradients, and weights in this way, respectively. Since all have the same communication cost, we can basically always do ZeRO-3 sharding, which shards the parameters, gradients, and optimizer states across a set of devices.
 
 **Why would we do this?** Standard data parallelism involves a lot of duplicated work. Each TPU AllReduces the full gradient, then updates the full optimizer state (identical work on all TPUs), then updates the parameters (again, fully duplicated). For ZeRO sharding (sharding the gradients/optimizer state), instead of an AllReduce, you can ReduceScatter the gradients, update only your shard of the optimizer state, update a shard of the parameters, then AllGather the parameters as needed for your forward pass.
 
