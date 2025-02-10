@@ -2,7 +2,7 @@
 layout: distill
 title: "How to Parallelize a Transformer for Training"
 # permalink: /main/
-description: "Here we discuss three main parallelism schemes used during LLM training: data parallelism, fully-sharded data parallelism (FSDP), and tensor parallelism. For each, we calculate at what point we become bottlenecked by communication."
+description: "Here we discuss four main parallelism schemes used during LLM training: data parallelism, fully-sharded data parallelism (FSDP), tensor parallelism, and pipeline parallelism. For each, we calculate at what point we become bottlenecked by communication."
 date: 2025-02-04
 future: true
 htmlwidgets: true
@@ -91,21 +91,21 @@ In this section, we'll discuss four common parallelism schemes: (pure) **data pa
 
 We'll use the following notation to simplify calculations throughout this section.
 
-| Notation | Meaning (model parameters)                                                 |
-| :------- | :------------------------------------------------------------------------- |
-| D        | **d**<sub>model</sub> ( the hidden dimension/residual stream dim)          |
-| F        | **d**<sub>ff</sub> (the feed-forward dimension)                            |
-| B        | Batch dimension (number of tokens in the batch; total, not per-device)     |
-| T        | Sequence length                                                            |
-| L        | Number of layers in the model                                              |
+| Notation | Meaning (model parameters)                                             |
+| :------- | :--------------------------------------------------------------------- |
+| D        | **d**<sub>model</sub> ( the hidden dimension/residual stream dim)      |
+| F        | **d**<sub>ff</sub> (the feed-forward dimension)                        |
+| B        | Batch dimension (number of tokens in the batch; total, not per-device) |
+| T        | Sequence length                                                        |
+| L        | Number of layers in the model                                          |
 
-| Notation | Meaning (hardware characteristic)                                          |
-| :------- | :------------------------------------------------------------------------- |
-| C        | FLOPS/s per chip                                                           |
+| Notation | Meaning (hardware characteristic)                                                                 |
+| :------- | :------------------------------------------------------------------------------------------------ |
+| C        | FLOPS/s per chip                                                                                  |
 | W        | Network bandwidth (bidirectional, often subscripted as  e.g. $W_{\text{ici}}$ or $W_{\text{dcn}}$ |
-| X        | Number of chips along mesh axis X                                          |
-| Y        | Number of chips along an alternate mesh axis, labeled Y                    |
-| Z        | Number of chips along a third mesh axis, labeled Z                         |
+| X        | Number of chips along mesh axis X                                                                 |
+| Y        | Number of chips along an alternate mesh axis, labeled Y                                           |
+| Z        | Number of chips along a third mesh axis, labeled Z                                                |
 
 For simplicity's sake, **we'll approximate a Transformer as a stack of MLP blocks** — attention is a comparatively small fraction of the FLOPs for larger models as we saw in [Section 4](../transformers). We will also ignore the gating matmul, leaving us with the following simple structure for each layer:
 
@@ -571,12 +571,12 @@ As before, we become bottlenecked when $T_\text{math} < T_\text{comms}$ which ha
 
 * During training there are 4 main parallelism schemes we consider, each of which has its own bandwidth and compute requirements (data parallelism, FSDP, model parallelism).
 
-|             **Strategy**              |                                                      **Description**                                                      |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-|        **Data Parallelism**         |                                  Activations are batch sharded, everything else is fully-replicated, we all-reduce gradients during the backward pass.                                   |
-|              **FSDP**               |           Activations, weights, and optimizer are batch sharded, weights are gathered just before use, gradients are reduce-scattered.            |
-|    **Model Parallelism (aka Megatron, Tensor)**     | Activations are sharded along $$d_\text{model}$$, weights are sharded along $$d_{ff}$$, activations are gathered before W<sub>in</sub>, the result reduce-scattered after W<sub>out</sub>. |
-| **Mixed FSDP + Model Parallelism** |                          Both of the above, where FSDP gathers the model sharded weights.                           |
+| **Strategy**                                 | **Description**                                                                                                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Data Parallelism**                         | Activations are batch sharded, everything else is fully-replicated, we all-reduce gradients during the backward pass.                                                                      |
+| **FSDP**                                     | Activations, weights, and optimizer are batch sharded, weights are gathered just before use, gradients are reduce-scattered.                                                               |
+| **Model Parallelism (aka Megatron, Tensor)** | Activations are sharded along $$d_\text{model}$$, weights are sharded along $$d_{ff}$$, activations are gathered before W<sub>in</sub>, the result reduce-scattered after W<sub>out</sub>. |
+| **Mixed FSDP + Model Parallelism**           | Both of the above, where FSDP gathers the model sharded weights.                                                                                                                           |
 
 And here are the "formulas" for each method:
 
