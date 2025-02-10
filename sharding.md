@@ -480,9 +480,14 @@ Note that ReduceScatter *introduces* a sharded dimension, and so has a natural f
 ## What Have We Learned?
 
 * The sharding of an array is specified by a **Mesh** that names the physical, hardware axes of our TPU mesh and a **Sharding** that assigns mesh axis names to the logical axes of the array. 
-* For example, **A**[I<sub>XY</sub>, J] describes an abstract array **A** with its first dimension sharded along two mesh axes X and Y. Combined with Mesh(mesh_shape=(4, 8), axis_names=('X', 'Y')) or the abbreviated Mesh({'X': 4, 'Y': 8}), this tells us our array is sharded 32 ways along the first dimension.
+  * For example, **A**[I<sub>XY</sub>, J] describes an abstract array **A** with its first dimension sharded along two mesh axes X and Y. Combined with Mesh(mesh_shape=(4, 8), axis_names=('X', 'Y')) or the abbreviated Mesh({'X': 4, 'Y': 8}), this tells us our array is sharded 32 ways along the first dimension.
 
-* **Arithmetic with sharded arrays** works exactly like with unsharded arrays unless you perform a contracting along a sharded axis. In that case, we have to introduce some communication.
+* **Arithmetic with sharded arrays works exactly like with unsharded arrays unless you perform a contraction along a sharded axis**. In that case, we have to introduce some communication. We consider four cases:
+
+  1. *Neither array is sharded along the contracting dimension*: no communication is needed. 
+  2. *One array is sharded along the contracting dimension* (or the contracting dimensions are sharded along different axes): we AllGather one of the inputs before performing the operation. 
+  3. *Both arrays are identically sharded along the contracting dimension:* we multiply the shards locally then perform an AllReduce or ReduceScatter.
+  4. *Both arrays are sharded along the same mesh axis along a non-contracting dimension:* we AllGather one of the inputs first.
 
 * TPUs use roughly **4 core communication primitives**: 
   1. AllGather: $[A_X, B] \to [A, B]$ 
@@ -505,13 +510,6 @@ $$T_{\text{comm per AllGather or ReduceScatter}} = \frac{\text{Data volume}}{\te
 | **ReduceScatter** | Sums a partially summed array along an axis and shards it along another axis (adding a subscript).                 | $[A, B] \\{U_X\\} \to [A_X, B]$  | Same as AllGather                                |
 | **AllReduce**     | Sums a partially summed array along an axis. Removes a { U<sub>x</sub> }. Combines an AllGather and ReduceScatter. | $[A_X, B]\\{U_Y\\} \to [A_X, B]$ | 2 * AllGather                                    |
 | **AllToAll**      | Gathers (replicates) an axis and shards a different dimension along the same axis.                                 | $[A, B_X] \to [A_X, B]$          | AllGather / 4 for a bidirectional ring           |
-
-* Note that we use the bidirectional bandwidth above, while the numbers reported in Section (1) are unidirectional.
-
-* **When performing sharded matmuls, we consider 3 main cases:** 
-1. *Neither array is sharded along the contracting dimension*: no communication is needed. 
-2. *One array is sharded along the contracting dimension* (or the contracting dimensions are sharded along different axes): we AllGather one of the inputs before performing the operation. 
-3. *Both arrays are identically sharded along the contracting dimension:* we multiply the shards locally then perform an AllReduce or ReduceScatter.
 
 ## Some Problems to Work
 

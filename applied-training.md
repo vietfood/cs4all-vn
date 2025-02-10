@@ -51,9 +51,9 @@ authors:
 #     for hyperlinks within the post to work correctly.
 #   - please use this format rather than manually creating a markdown table of contents.
 toc:
-  - name: "What Does LLaMA 3 Look Like?"
-  - name: "Counting Parameters and FLOPs"
-  - name: "How to Shard LLaMA 3-70B for Training"
+  - name: "What does LLaMA 3 look like?"
+  - name: "Counting parameters and FLOPs"
+  - name: "How to shard LLaMA 3-70B for training"
   - name: "Worked Problems"
 
 # Below is an example of injecting additional post-specific styles.
@@ -76,19 +76,21 @@ _styles: >
   }
 ---
 
-## What Does LLaMA 3 Look Like?
+_Our goal in this section is to apply results from the previous section to a very practical problem: training the LLaMA 3 family (herd) of models. Unlike the previous sections we want you to do a lot of this work yourself. For this reason, we've hidden the answers to each section so you can try to answer it first. Try grabbing a pen and doing by hand!_
+
+### What does LLaMA 3 look like?
 
 The LLaMA-3 model family<d-cite key="llama3"></d-cite> includes 3 main models: LLaMA 3 8B, 70B, and 405B. We'll mostly focus on 70B, and leave 8B and 405B for you to explore in the problem section at the end. Here's the architecture for LLaMA 3-70B, taken from the LLaMA [HuggingFace page](https://huggingface.co/meta-llama/Meta-Llama-3-70B/blob/main/config.json).
 
-| **hyperparam**                            | **value** |
-| ----------------------------------------- | --------- |
-| $$n_\text{layers}$$ (L)                   | 80        |
-| $$d_\text{model}$$ (D)                    | 8,192     |
-| $$\text{ffw}_\text{multiplier}$$ (F // D) | 3.5       |
-| $$n_\text{heads}$$ (N)                    | 64        |
-| $$n_\text{kv_heads}$$ (K)                 | 8         |
-| $$d_\text{qkv}$$ (H)                      | 128       |
-| $$n_\text{embeddings}$$ (V)               | 128,256   |
+| **hyperparam**              | **value** |
+| --------------------------- | --------- |
+| $$n_\text{layers}$$ (L)     | 80        |
+| $$d_\text{model}$$ (D)      | 8,192     |
+| $$d_{ff}$$ (F)              | 28,672    |
+| $$n_\text{heads}$$ (N)      | 64        |
+| $$n_\text{kv_heads}$$ (K)   | 8         |
+| $$d_\text{qkv}$$ (H)        | 128       |
+| $$n_\text{embeddings}$$ (V) | 128,256   |
 
 To highlight how easy this is to find, here's the config itself, along with a mapping:
 
@@ -96,13 +98,13 @@ To highlight how easy this is to find, here's the config itself, along with a ma
 
 _It's useful to make a big table with these numbers for many different open-source LLMs, so you can quickly compare the design decisions they've made._
 
-## Counting Parameters and FLOPs
+### Counting parameters and FLOPs
 
 **Question:** From this table, can we calculate the LLaMA 3-70B parameter count? 🤫 Let's apply the content of [Section 4](../transformers) and see if we can get 70B!
 
 | param            | formula                                                                                                                                           | count                                                        |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| FFW params       | d_model * d_model * ffw_multiplier * 3 (for gelu + out-projection) * n_layers                                                                     | 8,192 * 8,192 * 3.5 * 3 * 80 = **56.3e9**                    |
+| FFW params       | d_model * d_ff * 3 (for gelu + out-projection) * n_layers                                                                                         | 8,192 * 8,192 * 3.5 * 3 * 80 = **56.3e9**                    |
 | Vocab params     | 2 (input and output embeddings) * n_embeddings * d_model                                                                                          | 2 * 128,256 * 8,192 = **2.1e9**                              |
 | Attention params | n_layers * [ 2 (for q embedding and concatenated output projection) * d_model * n_heads * d_qkv + 2 (for k and v) * d_model * n_kv_heads * d_qkv] | 80 * (2 * 8,192 * 64 * 128 + 2 * 8,192 * 8 * 128) = **12e9** |
 |                  |                                                                                                                                                   | 56.3e9 + 2.1e9 + 12e9 = **70.4e9**                           |
@@ -111,7 +113,9 @@ That's great! We get the number we expect. You'll notice as expected that the FF
 
 <p markdown=1 class="takeaway">**Takeaway**: The 3 big weight matrices in the MLP block are so much larger than all the other arrays in the Transformer that we can typically almost ignore all other parameters when reasoning about model memory or FLOPs. For LLaMA 3-70B, they represent 56B of 70B parameters.</p>
 
-**Question:** What about FLOPs? How many FLOPs do we perform per token per training step? _This helps us determine how expensive the whole training process will be._
+Let's look at FLOPs now! *Remember the general rules for training from [Section 4](../transformers).*
+
+**Question:** How many FLOPs does LLaMA-3 perform per token per training step? _This helps us determine how expensive the whole training process will be._
 
 {% details Click here for the answer, once you've thought about it! %}
 
@@ -135,7 +139,7 @@ That's great! We get the number we expect. You'll notice as expected that the FF
 
 {% enddetails %}
 
-**Question:** LLaMA 3-70B was pretrained with a batch size of about 4M tokens. How many TPUs do we need at minimum to train with this batch size? _While this isn't that relevant of a question, it gives us a ballpark for the minimum compute resources to train a model like this yourself._
+**Question:** LLaMA 3-70B was pretrained with a batch size of about 4M tokens. How many TPUs do we need at minimum to train with this batch size? _You can assume bfloat16 parameters and float32 optimizer state, and that you checkpoint gradients 4 times per layer._
 
 {% details Click here for the answer, once you've thought about it! %}
 
@@ -143,47 +147,46 @@ That's great! We get the number we expect. You'll notice as expected that the FF
 
 | **Params** | 2 * 70GB | ~140GB |
 | **Optimizer State** | 8 * 70GB | ~560GB |
-| **Gradient Checkpoints** | 2 * 8192 * 4e6 * 3 * 80 | ~15.8TB |
-| -- | --: | --: |
-| **Total** |  | ~16.5TB
+| **Gradient Checkpoints** | 2 * 8192 * 4e6 * 3 * 80 | ~20.9TB |
+| **Total**                |                         | ~16.5TB |
 
-You notice that gradient checkpointing strongly dominates the memory picture, even with a very conservative checkpointing scheme. We could technically go to 1 checkpoint per layer, or do microbatching, but this is a reasonable picture. With these assumptions, since each TPU v5p has 96GB of HBM, we need `16.5e12 / 96e9 = 171` TPUs. That's not very much actually!
+The total here is about 21.6TB. You notice that gradient checkpointing strongly dominates the memory picture, even with a very conservative checkpointing scheme. We could technically go to 1 checkpoint per layer, or do microbatching, but this is a reasonable picture. With these assumptions, since each TPU v5p has 96GB of HBM, we need `21.6e12 / 96e9 = 225` TPUs. That's not very much actually!
 
-*Why wouldn't we do this?* Well, because it would take us `44 days * 8960 / 171 = 2305 days` to train. That's 6 years. **That's a lot.** Still, this makes it clear that we're using these large clusters not because we're bound by memory but rather because we need the extra FLOPs.
+*Why wouldn't we do this?* Well, because it would take us `44 days * 8960 / 171 = 1752 days` to train. That's 6 and a half years. **That's a lot.** Still, this makes it clear that we're using these large clusters not because we're bound by memory but rather because we need the extra FLOPs.
 
 {% enddetails %}
 
-**Question:** If we do use 8960 TPU v5p chips, how much memory will we use per-chip?
+**Question:** Under the same assumptions as the question above, if we use 8960 TPU v5p chips, how much memory will we use per-chip?
 
 {% details Click here for the answer, once you've thought about it! %}
 
-**Answer**: Our total memory is still about 16.5TB, so per-chip we'll be using about 1.8GB per chip, which is bascially nothing. If we did much more aggressive checkpointing, e.g. 12 checkpoints per layer, we'd still only be at 8GB per chip. We're nowhere near being memory bound during training at these scales.
+**Answer**: Our total memory is still about 21.6TB, so per-chip we'll be using about 2.4GB per chip, which is bascially nothing. If we did much more aggressive checkpointing, e.g. 12 checkpoints per layer, we'd still only be at 8GB per chip. We're nowhere near being memory bound during training at these scales.
 
 {% enddetails %}
 
 <p markdown=1 class="takeaway">**Takeaways**: It is technically possible to train even very large models on very small topologies, with the caveat that they will likely take a long time. Being able to calculate the total FLOPs of a training run allows us to ballpark its training time by assuming a modest MFU and a known topology.</p>
 
-## How to Shard LLaMA 3-70B for Training
+### How to shard LLaMA 3-70B for training
 
 Let's stick to our setting from above and say we want to train LLaMA 3-70B with 4M token batch size (1024 sequences of length 8192 per batch) on a TPU v5p pod of 8960 chips. Let's discuss what the best sharding strategy is for this model.
 
-**Question:** Can we just do pure FSDP? This should be the first idea you have, since it's simple and will introduce no extra communication if it works.
+**Question:** Under the assumptions above, can we train our model with FSDP alone? To start, let's say we can't do any sequence/context parallelism. _This should be the first idea you have, since it's simple and will introduce no extra communication if it works._
 
 {% details Click here for the answer, once you've thought about it! %}
 
-**Answer**: This depends a bit on our sequence length and what we mean by FSDP. LLaMA 3-70B is initially trained with sequences of length 4K, so at this sequence length a batch size of 4M tokens gives us a *sequence batch size* of 1024. That means we can only really do pure data parallelism/FSDP up to 1024 chips. So the answer in the simple sense of "pure data parallelism with no extra communication" is no. The next question will answer a slightly less pedantic version of this.
+**Answer**: This answer will be a little pedantic. As noted above, LLaMA 3-70B is initially trained with sequences of length 4K, so the batch size of 4M tokens gives us a *sequence batch size* of 1024. That means we can only really do pure data parallelism/FSDP up to 1024 chips _because that's how many sequences we have to do data parallelism over_. So the answer in the simple sense of "fully data parallelism with no extra communication" is no. The next question will answer a slightly less pedantic version of this.
 
 {% enddetails %}
 
-**Question:** If we allow ourselves to do some sequence sharding, can we do only FSDP? _By sequence sharding, we mean splitting our batches along the sequence dimension as well as the batch dimension. This can be seen as almost equivalent to FSDP except for some additional communication complexity during attention when we'll need to gather the queries or keys. Let's ignore that here and just think of it as a "token-level" data parallelism strategy._
+**Question:** Let's relax the requirement of not doing any sequence sharding. If we allow ourselves to do FSDP over both the batch _and_ sequence axes, can we train LLaMA 3-70B with only FSDP on 8960 chips?
 
 {% details Click here for the answer, once you've thought about it! %}
 
-**Answer**: Sequence sharding lets us do more data parallelism by sharding the batch along the sequence dimension as well. This adds some non-trivial communication overhead to attention, but is otherwise equivalent to FSDP. If we did this, we would end up with a per-TPU batch size of `4 * 1024 * 1024 / 8960 = 468 tokens`. We said in the previous section that we become ICI-bound by FSDP when $$\text{per device batch size} < 2550 / n_\text{axes}$$. Since we could dedicate 3 axes here with a full 3D pod, this would give us a lower bound of 850, which we're well below. So **the answer is no**, even with 3 axes.
+**Answer**: Now that we're allowing ourselves to do sequence/context parallelism as well, we can scale up way more. First let's calculate our per-device batch size. If we do 8960-way FSDP, we end with a per-TPU batch size of `4 * 1024 * 1024 / 8960 = 468 tokens`. We know from the previous section that we become ICI-bound by FSDP when $$\text{per device batch size} < 2550 / n_\text{axes}$$. Since we can dedicate 3 axes here with a full 3D pod, this would give us a lower bound of 850, which we're well below. **So the answer is no, even with 3 axes. We would be solidly communication-bound.**
 
 {% enddetails %}
 
-**Question:** Let's give up on pure FSDP and explore mixed tensor parallelism and FSDP. Does this let us remain compute-bound? What amount of FSDP and tensor parallelism should we do?
+**Question:** Now let's look at mixed tensor parallelism and FSDP. Does there exist some combination that lets us remain compute-bound? What amount of FSDP and tensor parallelism should we do if so?
 
 {% details Click here for the answer, once you've thought about it! %}
 
@@ -192,14 +195,6 @@ Let's stick to our setting from above and say we want to train LLaMA 3-70B with 
 $$X_{opt} = \sqrt{\frac{2BN}{F}} = \sqrt{\frac{2 \cdot 4.19e6 \cdot 8960}{28672}} = 1618$$
 
 Rounding to a reasonable multiple of 2, that gives us roughly 2048-way FSDP and 4-way model parallelism. That should work well!
-
-{% enddetails %}
-
-**Question:** Are we going to be ICI bound with this amount of tensor parallelism? _Go through the work of checking how much tensor parallelism we can get away with for LLaMA 3._
-
-{% details Click here for the answer, once you've thought about it! %}
-
-**Answer**: We basically know the answer is no because the discriminant above was non-negative, but we would become ICI bound for FSDP + tensor parallelism when $$\text{BS per device} < 2 \cdot 2550^2 / F = 453$$, so we expect not. We would be ICI bound with pure model parallelism when $$Y > F / 2550 = 11$$, which we are well below. So **we are not ICI bound here.**
 
 {% enddetails %}
 
