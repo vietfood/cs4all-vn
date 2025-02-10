@@ -77,11 +77,6 @@ _styles: >
     text-align: center;
     font-size: 16px;
   }
-  .nowrap-header {
-    white-space: nowrap;
-    font-weight: 500;
-  }
-
 ---
 
 ## What Is a TPU?
