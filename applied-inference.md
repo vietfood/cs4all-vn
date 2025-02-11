@@ -51,6 +51,7 @@ authors:
 toc:
   - name: "What's the LLaMA Serving Story?"
   - subsections:
+    - name: "Thinking about throughput"
     - name: "What about prefill?"
   - name: "Visualizing the Latency Throughput Tradeoff"
   - name: "Worked Problems"
@@ -87,22 +88,67 @@ Let's remind ourselves what LLaMA 3-70B looks like (see [Section 6](../applied-t
 | $$d_\text{model}$$ (D)      |   8,192   |
 | $$d_{ff}$$ (F)              |  28,672   |
 | $$n_\text{heads}$$ (N)      |    64     |
-| $$n_\text{kv_heads}$$ (K)   |     8     |
+| $$n_\text{kv heads}$$ (K)   |     8     |
 | $$d_\text{qkv}$$ (H)        |    128    |
 | $$n_\text{embeddings}$$ (V) |  128,256  |
 
-For serving, we mostly want to serve on TPU v5e since it is our current dedicated inference chip with the best performance / dollar (cost comes from [Google Cloud pricing](https://cloud.google.com/tpu/pricing)):
+Let's start with a simple question: **what hardware should we serve on?** The answer is basically, whichever is cheapest in FLOPs / dollar.<d-footnote>This isn't always true, sometimes more HBM or ICI bandwidth is critical rather than FLOPs, but this is a good heuristic.</d-footnote> For this reason, we typically want to serve on TPU v5e, our current dedicated inference chip (cost comes from [Google Cloud pricing](https://cloud.google.com/tpu/pricing) as of February 2025):
 
 | **TPU type** | **bfloat16 FLOPs/s** | **Google Cloud USD / hour** | **FLOPs / $** |
 | ------------ | :------------------: | :-------------------------: | :-----------: |
+| H100         |        9.9e14        |            $10.8            |    9.1e13     |
 | v5p          |       4.59e14        |            $4.2             |    1.09e14    |
 | v5e          |       1.97e14        |            $1.2             |  **1.64e14**  |
 
-Let's start by thinking about a bulk inference regime, where our goal is to maximize throughput (samples / $). When we optimize for throughput, we want to be compute bound, meaning we come close to utilizing all the TPU MXU capacity. Typically that means we want the batch size to be as large as possible, so we are doing as much work as possible.
+Each TPU v5e has 16GB of HBM which will require us to shard our model fairly aggressively. Let's start by thinking about some basic quantities that might matter for us:
+
+**Question:** How large are LLaMA 3-70B's KV caches per token? *You can assume we store them in int8. This determines how large our batch size can be on a given topology.*
+
+{% details Click here once you've thought it through! %}
+
+LLaMA 3-70B has 8 KV heads, so the size per token is `2 * K * H * L = 2 * 8 * 128 * 80 = 160kB`.
+
+**Note just how big this is!** If we have a sequence length of 32k tokens (as is common), this uses `162e3 * 32,768 = 5.3GB / sequence`. For BS=240, this is 1.3TB! Since TPU v5e only have 16GB a piece, we would need about `(70e9 + 1.3e12) / 16e9 = 86` TPU v5e chips to even fit this much memory. Also note how large this is compared to the 70GB of model parameters.
+
+{% enddetails %}
+
+**Question:** Let's say we want to serve L3 70B at batch size 32 and 8192 sequence length with everything (params and KVs) in int8. How much total memory will this use? What's the smallest slice we could serve this on?
+
+{% details Answer %}
+
+Since our KVs are `160e3` bytes in int8, our total KV memory is `160e3 * 8192 * 32 = 41.9e9` bytes. Our parameters are `70e9` bytes, since we have 1 byte per parameter. Thus, our total memory usage is `41.9e9 + 70e9 = 112GB`.
+
+The smallest slice we could use would have `112e9 / 16e9 = 7` TPUs, or (rounding to an even size), TPU v5e `4x2`. This will be a tight fit and we might not be able to quite fit this accounting for other overhead, so we might need a `4x4` at minimum (or to drop the batch size).
+
+{% enddetails %}
+
+**Question:** At this batch size and quantization on a TPU v5e `4x2`, roughly what latency would we expect per decode step? What throughput (tokens / sec / chip). What about a `4x4`? *Assume we perform our FLOPs in bfloat16 and everything is fully sharded.*
+
+{% details Answer %}
+
+We can invoke the formula from the previous section that
+
+$$\begin{align*}
+\tiny \text{Theoretical Step Time (General)} = \underbrace{\frac{\text{Batch Size} \times \text{KV Cache Size}}{\tiny \text{Total Memory Bandwidth}}}_{\text{Attention (always bandwidth-bound)}} + \underbrace{\max\left(\frac{2 \times \text{Batch Size} \times \text{Parameter Count}}{\text{Total FLOPs/s}}, \frac{\text{Parameter Size}}{\text{Total Memory Bandwidth}}\right)}_{\tiny \text{MLP (can be compute-bound)}}
+\end{align*}$$
+
+Here our critical batch size will be about 120 since our parameters are in int8 but our FLOPs are in bfloat16. We could also manually calculate the RHS maximum, but that's basically a calculation we've already done several times. **So we're well into the memory-bound regime for both our matmul and our FLOPs.**
+
+Strictly looking at memory bandwidth then, our step time is basically `(KV size + param size) / (8 * HBM bandwidth) = 112e9 / (8 * 8.1e11) = 17ms`. **So theoretically our step time is about 17ms.** Our throughput would be `32 / .017 = 1882 tokens / sec`, or `1882 / 8 = 235 tokens / sec / chip`. 
+
+There's one caveat here which is to check if we might be ICI bound on our matmuls. We could dedicate 2 axes to it here, so we're ICI bound in theory when $Y > 2 * F / 2550 = 2 * 28672 / 2550 = 22$, so we're golden!
+
+If we were to run on a `4x4`, we'd still be fine ICI-wise, so our latency would drop to `17 / 2 = 8.5ms`, but our throughput would remain the same.
+
+{% enddetails %}
+
+### Thinking about throughput
+
+Let's spend a little time thinking purely about throughput. When we optimize for throughput, we want to be compute bound, meaning we come close to utilizing all the TPU MXU capacity. Typically that means we want the batch size to be as large as possible, so we are doing as much work as possible.
 
 **Question:** On TPU v5e, using bfloat16 weights and activations, how large do our batch sizes need to be for us to be compute-bound in our matmuls? What if we do int8 weights but perform our FLOPs in bfloat16? What about int8 weights with int8 FLOPs?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 As discussed in Section 7, for any bfloat16 matmul for which $B \ll D, F$ we have
 
@@ -116,19 +162,9 @@ The case of int8 weights and bfloat16 FLOPs is quite common, since quantizing pa
 
 {% enddetails %}
 
-**Question:** For LLaMA 3-70B, how large is each of our KV caches per token? *You can assume we store them in int8. This determines how large our batch size can be on a given topology.*
-
-{% details Click here once you've thought it through! %}
-
-LLaMA 3-70B has 8 KV heads, so the size per token is `2 * K * H * L = 2 * 8 * 128 * 80 = 160kB`.
-
-**Note just how big this is!** If we have a sequence length of 32k tokens (as is common), this uses `162e3 * 32,768 = 5.3GB / sequence`. For BS=240, this is 1.3TB! Since TPU v5e only have 16GB a piece, we would need about `(70e9 + 1.3e12) / 16e9 = 86` TPU v5e chips to even fit this much memory. Also note how large this is compared to the 70GB of model parameters.
-
-{% enddetails %}
-
 **Question:** What is the smallest TPU v5e topology we could serve LLaMA 3-70B on using bfloat16, int8, and int4 (both KVs and parameters) with 8k context? *You can think of KV caches as negligibly small for this one.*
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 This is easy! If we're OK with a tiny batch size then the only limit is fitting parameter memory in HBM, i.e. it is just `ceil(num_params * sizeof(dtype) / HBM per TPU`, or `ceil(70e9 * sizeof(dtype) / 16e9)` rounded to the nearest reasonable topology (some multiple of 2):
 
@@ -144,7 +180,7 @@ That's pretty cool! It tells us we could fit LLaMA 70B on a TPU v5e 2x2 if we wa
 
 **Question:** Assume we use the largest batch size that fits on these topologies, what latency we could expect for each generate step?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 This is also easy, since we're picking our batch size to fill up all our HBM! This is just a question of how long it takes to load a full TPU v5e's worth of bytes into the MXU. This is just `v5e HBM / v5e HBM memory bandwidth = 16GB / 8.2e11 = 19ms`, so this is **19ms / step**. Assuming our generations have a median length of 512 tokens, that is about 9s for each decode. Note that we could get marginally better latency with a smaller batch size, for instance if we only looked at model parameters in int4 our minimum latency is about 10ms / step, since HBM is no longer full.
 
@@ -156,7 +192,7 @@ Likewise, in the FLOPs-bound regime (e.g. training or big-batch inference), we c
 
 **Question:** For each of these, what throughput per chip does this give us (in terms of queries / chip)? *You can assume our median decode length is 512 tokens.*
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 This is an important question because it's exactly correlated with cost / token.
 
@@ -174,7 +210,7 @@ Note that this is rather optimistic since it totally ignores the working memory 
 
 **Question:** How would our peak throughput change if we doubled our topology for each of the above examples?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 If we used a 4x8 slice in bfloat16, we would have 186GB remaining for KV caches, which would let us up our batch size to 161. Then since our step time would remaining the same, we would have a throughput of `16.54 / num_chips`, or
 
@@ -190,7 +226,7 @@ A further increase would give an even bigger win! The big takeaway is that **the
 
 **Question:** Now let's dig into the question of sharding. Let's say we wanted to serve in bfloat16 on a TPU v5e 4x8. What sharding would we use for our model on a TPU v5e 4x8 during generation? Can we avoid being communication bound?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 As discussed in the previous section, we only really have one option for sharding during generation: model parallelism. How much can we do before we become communication bound? As we've discussed in the previous section, our models become communication bound roughly when
 
@@ -218,7 +254,7 @@ We've mostly ignored prefill here because it's much simpler. Let's put a couple 
 
 **Question:** Assume we achieve a 40% FLOPs utilization during prefill. How long will a prefill of length 8192 take on 16 TPU v5e chips?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 At 8k tokens, we are solidly compute bound, so we just need to reason about FLOPs. We know our model has `70e9` parameters so each forward pass uses `2 * 70e9 * B` FLOPs. Assuming 40% MFU (FLOPs utilization), this gives us a runtime of about `2 * 70e9 * 8192 / (16 * 1.97e14 * 0.4) = 0.91s`. Compared to the numbers we've been looking at before, that's actually quite a lot!
 
@@ -226,7 +262,7 @@ At 8k tokens, we are solidly compute bound, so we just need to reason about FLOP
 
 **Question:** Assume we have a median prefill length of 8192 tokens and a median decode length of 4096 tokens. Say we have a generate batch size of 32. On average how many sequences finish decoding per step? On average how many tokens are evicted from our KV cache each step?
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 This is kind of straightforward. Since we have a median decode length of 4096 tokens, a sequence will finish roughly every 1 / 4096 tokens. Given a batch size of 32, this means we have `32 / 4096` sequences evicted per step. Since our KV cache length is roughly `8192 + 4096`, this is `32 * (8192 + 4096) / 4096 = 96` tokens evicted per step. The general formula is $B * (P + G) / G$ where $P$ and $G$ are the prefill and generate lengths.
 
@@ -234,7 +270,7 @@ This is kind of straightforward. Since we have a median decode length of 4096 to
 
 **Question:** Assume we do disaggregated serving with a median prefill length of 8192 and a median decode length of 512. Assume the prefill and generate latencies calculated above in bfloat16. What ratio of prefill:generate servers will you need to keep both fully saturated.
 
-{% details Click here once you've thought it through! %}
+{% details Answer %}
 
 This is kind of a fun question. Let $P$ be the number of prefill servers and $G$ be the number of generate servers. So generally speaking, this is a pipeline problem where we feed sequences in at a rate of `P / prefill_latency` and consume them at a rate of `B * G / (generate_latency * median_decode_length)`. We had calculated `910ms` per prefill step and `19ms` per decode step at batch size 43 (let's call that 32). Therefore we need `P / 0.91 = 32 * G / (0.019 * 512)` or `P = 3G`, i.e. we need about 3 times more prefill servers than generation servers!
 
