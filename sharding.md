@@ -146,7 +146,7 @@ Lastly, note that we *cannot* have multiple named axes sharded along the *same* 
 
 JAX uses a named sharding syntax that very closely matches the abstract syntax we describe above. We'll talk more about this in [Section 10](../jax-stuff), but here's a quick preview. You can play with this in a Google Colab [here](https://colab.research.google.com/drive/15cxw66eABwZPG-V4QFmbLfiykPFf_gaP?usp=sharing) and profile the result to see how JAX handles different shardings. This snippet does 3 things:
 
-1. Creates a **jax.Mesh** that maps our 4 TPUs into a 2x2 grid with names ‘X' and ‘Y' assigned to the two axes. 
+1. Creates a **jax.Mesh** that maps our 8 TPUs into a 4x2 grid with names ‘X' and ‘Y' assigned to the two axes. 
 2. Creates matrices A and B where A is sharded along both its dimensions and B is sharded along the output dimension. 
 3. Compiles and performs a simple matrix multiplication that returns a sharded array.
 
