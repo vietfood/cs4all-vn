@@ -523,17 +523,17 @@ Our array is only sharded along X, which has size 4, so effectively each shard h
 
 {% enddetails %}
 
-**Question 2 [AllGather latency]**: How long should $\text{AllGather}_X([B_X, D_Y])$ take on a TPUv4p 4x4x4 slice with mesh `Mesh({'X': 4, 'Y': 4, 'Z': 4})` if $B=1024$ and $D=4096$ in bfloat16? How about $\text{AllGather}_Y([B_X, D_Y])$?  How about $$\text{AllGather}_{XY}([B_X, D_Y])$$? How about $$\text{AllGather}_Z([B_X, D_Y]\{U_Z\})$$?
+**Question 2 [AllGather latency]**: How long should $\text{AllGather}_X([B_X, D_Y])$ take on a TPUv4p 4x4x4 slice with mesh `Mesh({'X': 4, 'Y': 4, 'Z': 4})` if $B=1024$ and $D=4096$ in bfloat16? How about $$\text{AllGather}_{XY}([B_X, D_Y])$$? How about $$\text{AllReduce}_Z([B_X, D_Y] \{U_Z \})$$?
 
 {% details Click here for the answer. %}
 
-1. Because we're just gathering over one axis and the other is sharded, we're effectively gathering $\frac{2BD}{Y}$ bytes over 1 axis. Since our ICI bandwidth for TPU v4p is 9e10 bytes/second bidirectional, this will take $\frac{2BD}{9e10 \cdot Y} = \frac{2 \cdot 1024 \cdot 4096}{9e10 \cdot 4} = 23 \mu s$. We have a full wraparound on the 4 axes so we can use the full bidirectional bandwidth.
+We have a wraparound link on all axes because we have a full `4x4x4` cube, so we have 9e10 bidirectional bandwidth to work with.
 
-2. We're gathering along a wraparound axis of size $Y=4$, the total data we have to move is $2BD/Y$ bytes, and the bidirectional bandwidth on v4p is 9e10 bytes/second, so once more we get $\frac{2BD}{9e10 \cdot Y} = 23 \mu s$.
+1. Because we're just gathering over one axis and the other is sharded, we're effectively gathering $\frac{2BD}{Y}$ bytes over 1 axis. Since our ICI bandwidth for TPU v4p is 9e10 bytes/second bidirectional, this will take $\frac{2BD}{9e10 \cdot Y} = \frac{2 \cdot 1024 \cdot 4096}{9e10 \cdot 4} = 23 \mu s$.
 
-3. We use the multi-axis equation, and find that $$T_{\text{total}} = \max\{4 \cdot T_{\text{min}}, \frac{2BD}{2 \cdot W_{\text{ICI}}}\}$$. The per-hop latency in TPU v5e is $\frac{1}{2}\mu s$, so the left operand is $2 \mu s$. The right operand is $\frac{2 \cdot 1024 \cdot 4096}{1.8e11}$ seconds, or $46 \mu s$, so we're throughput bound, not latency bound.
+2. We have twice the bandwidth as before but we're AllGathering the full array, so `T = 2BD / (2 * W) = 2*1024*4096 / (2 * 9e10) = 46us`. This is far from the latency bound of 4us (1us per hop), so we're fine.
 
-4. The result of this operation has shape $[B_X, D_Y]$, so the number of bytes in the array each machine will hold is $\frac{2BD}{XY}$. We have wraparound links for the $Z$ axis since it's a multiple of 4 in TPU v5e, so we get a bidirectional bandwidth of 9e10 bytes / second. Thus this operation takes time $\frac{2 \cdot 1024 \cdot 4096}{16 \cdot 9e10}$ seconds, or $5.8 \mu s$.
+3. The cost of an AllReduce is twice that of an AllGather, so the cost is about $4BD / W$, or roughly `4 * 1024 * 4096 / 9e10 = 190us`.
 
 {% enddetails %}
 
