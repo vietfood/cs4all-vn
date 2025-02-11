@@ -365,6 +365,14 @@ This is purely a question of when $$24BTDNH == 12BT^2NH$$. Simplifying we get $$
 
 **Question 6:** Say we only save the output of each of the 7 main matmuls in a Transformer layer during our forward pass (Q, K, V, O \+ the three FFW matrices). How many extra FLOPs do we need to "rematerialize” during the backwards pass?
 
+**Question 7:** DeepSeek v3 says it was trained for 2.79M H800 hours on 14.8T tokens ([source](https://arxiv.org/pdf/2412.19437v1)). Given that it has 37B activated parameters, roughly what hardware utilization did they achieve? *Hint: note that they used FP8 FLOPs without structured sparsity.*
+
+{% details Click here for the answer. %}
+
+From the spec sheet [here](https://lenovopress.lenovo.com/lp1814.pdf), we find 3,026 TFLOPs/s of FP8 performance with sparsity, or typically half this (`1.513e15` FLOPs/s) without sparsity. 2.79M H800 hours means `2.79e6 * 1.513e15 * 60 * 60 = 1.52e25` total FLOPs. Given the activated parameter count of 37B, this training run should have used about `2 * 37e9 * 14.8e12 = 1.1e24` FLOPs. That means the FLOPs utilization is about `1.1e24 / 1.52e25 = 7.2%`. 
+
+{% enddetails %}
+
 <h3 markdown=1 class="next-section">That's it for Part 4! For Part 5 (about scaling Transformer training), [click here](../training)!</h3>
 
 ## Appendix
