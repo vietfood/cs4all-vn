@@ -169,9 +169,9 @@ Note that the forward pass has no communication — **it's all in the backward p
 
 **Why do this?** Pure data parallelism reduces activation memory pressure by splitting our activations over the batch dimension, allowing us to almost arbitrarily increase batch size as long as we have more chips to split the batch dimension over. Especially during training when our activations often dominate our memory usage, this is very helpful.
 
-**Why not do this?** Pure data parallelism does nothing to reduce memory pressure from model parameters or optimizer states, which means pure data parallelism is rarely useful for interesting models at scale where our parameters + optimizer state don't fit in a single TPU. To give a sense of scale, if we train with parameters in bf16 and optimizer state in fp32 with Adam<d-footnote>Adam stores parameters, first order and second order accumulators. Since the params are in bfloat16 and optimizer state is in float32, this gives us `2 + 8 = 10` bytes per parameters.</d-footnote>, the largest model we can fit has $$\text{TPU memory} / 10$$ parameters, so e.g. on a TPUv5p pod with 96GB of HBM and pure data parallelism this is about 10B parameters.
+**Why not do this?** Pure data parallelism does nothing to reduce memory pressure from model parameters or optimizer states, which means pure data parallelism is rarely useful for interesting models at scale where our parameters + optimizer state don't fit in a single TPU. To give a sense of scale, if we train with parameters in bf16 and optimizer state in fp32 with Adam<d-footnote>Adam stores parameters, first order and second order accumulators. Since the params are in bfloat16 and optimizer state is in float32, this gives us `2 + 8 = 10` bytes per parameters.</d-footnote>, the largest model we can fit has $$\text{TPU memory} / 10$$ parameters, so e.g. on a TPUv5p pod with 96GB of HBM and pure data parallelism this is about 9B parameters.
 
-<p markdown=1 class="takeaway">**Takeaway**: the largest model we can train with Adam and pure data parallelism has $$\text{num_params} = \text{HBM per device} / 10$$. For TPU v5p this is roughly 9B parameters.</p>
+<p markdown=1 class="takeaway">**Takeaway**: the largest model we can train with Adam and pure data parallelism has $$\text{num_params} = \text{HBM per device} / 10$$. For TPU v5p this is roughly 9B parameters.<d-footnote>Note that this doesn't include gradient checkpoints, so this wouldn't actually be useful. This is an absolute lower bound with a batch of 1 token.</d-footnote></p>
 
 *To make this useful for real models during training, we'll need to at least partly shard the model parameters or optimizer.*
 
@@ -565,7 +565,7 @@ As before, we become bottlenecked when $T_\text{math} < T_\text{comms}$ which ha
 
 ## Takeaways from LLM Training on TPUs
 
-* Increasing parallelism or reducing batch size both tend to make use more communication-bound because they reduce the amount of compute performed per chip.
+* Increasing parallelism or reducing batch size both tend to make us more communication-bound because they reduce the amount of compute performed per chip.
 
 * Up to a reasonable context length (~32k) we can get away with modeling a Transformer as a stack of MLP blocks and define each of several parallelism schemes by how they shard the two/three main matmuls per layer.
 
@@ -606,7 +606,7 @@ $$
 \hline
 \end{array}$$
 
-* Pure data parallelism is rarely useful because the model and its optimizer state use bytes \= 10x parameter count. This means we can rarely fit more than a few billion parameters in memory.
+* Pure data parallelism is rarely useful because the model and its optimizer state use bytes = 10x parameter count. This means we can rarely fit more than a few billion parameters in memory.
 
 * Data parallelism and FSDP become comms bound when the $$\text{batch size per shard} < C / W$$, the arithmetic intensity of the network. For ICI this is 2,550 and for DCN this is 75,000. This can be increased with more parallel axes.
 

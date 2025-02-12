@@ -148,7 +148,7 @@ Let's look at FLOPs now! *Remember the general rules for training from [Section 
 | **Params** | 2 * 70GB | ~140GB |
 | **Optimizer State** | 8 * 70GB | ~560GB |
 | **Gradient Checkpoints** | 2 * 8192 * 4e6 * 3 * 80 | ~20.9TB |
-| **Total**                |                         | ~16.5TB |
+| **Total**                |                         | ~21.6TB |
 
 The total here is about 21.6TB. You notice that gradient checkpointing strongly dominates the memory picture, even with a very conservative checkpointing scheme. We could technically go to 1 checkpoint per layer, or do microbatching, but this is a reasonable picture. With these assumptions, since each TPU v5p has 96GB of HBM, we need `21.6e12 / 96e9 = 225` TPUs. That's not very much actually!
 
