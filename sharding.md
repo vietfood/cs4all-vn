@@ -94,7 +94,7 @@ Here's an example 2D array **A** sharded across 4 TPUs:
 
 {% include figure.liquid path="assets/img/sharding-example.png" class="img-fluid" caption="<b>Figure:</b> an example array of shape <b>A</b>[I, J] gets sharded across 4 devices. Both dimensions are evenly sharded across 2 devices with a sharding <b>A</b>[I<sub>X</sub>, J<sub>Y</sub>]. Each TPU holds 1/4 of the total memory." %}
 
-Note how the sharded array still has the same *global* or *logical shape* as unsharded array, say (4, 128), but it also has a *device local shape*, like (2, 64), which gives us the actual size in bytes that each TPU is holding (in the figure above, each TPU holds ¼ of the total array). Now we'll generalize this to arbitrary arrays.
+Note how the sharded array still has the same *global* or *logical shape* as unsharded array, say `(4, 128)`, but it also has a *device local shape*, like `(2, 64)`, which gives us the actual size in bytes that each TPU is holding (in the figure above, each TPU holds ¼ of the total array). Now we'll generalize this to arbitrary arrays.
 
 ### A unified notation for sharding
 
@@ -185,16 +185,9 @@ Obviously, this depends on the computation involved.
 * For *elementwise* operations, there is **no overhead** for operating on a distributed array.  
 * When we wish to perform operations across elements resident on many devices, things get complicated. Thankfully, for most machine learning nearly all computation takes place in the form of matrix multiplications, and they are relatively simple to analyze.
 
-When we think about sharded matrix multiplications, there are generally 4 cases we need to consider:
-1. **[Case 1](#case-1-neither-multiplicand-has-a-sharded-contracting-dimension):** neither input is sharded along the contracting dimension. _We can multiply local shards without any communication._
-2. **[Case 2](#case-2-one-multiplicand-has-a-sharded-contracting-dimension):** one input has a sharded contracting dimension. _We typically "AllGather" the sharded input along the contracting dimension._
-3. **[Case 3](#case-3-both-multiplicands-have-sharded-contracting-dimensions):** both inputs are sharded along the contracting dimension. _We can multiply the local shards, then "AllReduce" the result._
-4. **[Case 4](#case-4-both-multiplicands-have-a-non-contracting-dimension-sharded-along-the-same-axis):** both inputs have a non-contracting dimension sharded along the same axis. We cannot proceed without AllGathering one of the two inputs first.
+The rest of this section will deal with how to multiply sharded matrices. To a first approximation, this involves moving chunks of a matrix around so you can fully multiply or sum each chunk. **Each sharding will involve different communication.** For example, $A[I_X, J] \cdot B[J, K] \to C[I_X, K]$ can be multiplied without any communication because the *contracting dimension* (J, the one we're actually summing over) is unsharded. However, if we wanted the output unsharded (i.e. $A[I_X, J] \cdot B[J, K] \to C[I_X, K]$), we would need to copy $A$ or $C$ to every device. These two choices have different communication costs, so we need to calculate this cost and pick the lowest one.
 
-You can think of these as rules that simply need to be followed, but it's also valuable to understand why these rules hold and how expensive they are. We'll go through each one of these in detail now.
-
-{% details You can also think of these rules in terms of "block matrix multiplcation". %}
-
+{% details You can think of this in terms of "block matrix multiplcation". %}
 
 First let's recall the concept of a "block matrix”, or a nested matrix of matrices:
 
@@ -257,6 +250,14 @@ A_{10}B_{00} + A_{11}B_{10} & A_{10}B_{01} + A_{11}B_{11}
 What this means is that implementing distributed matrix multiplications reduces down to moving these sharded blocks over the network, performing *local* matrix multiplications on the blocks, and summing their results. **The question then is what communication to add, and how expensive it is.**
 
 {% enddetails %}
+
+Conveniently, we can boil down all possible shardings into roughly 4 cases we need to consider, each of which has a rule for what communication we need to add
+1. **[Case 1](#case-1-neither-multiplicand-has-a-sharded-contracting-dimension):** neither input is sharded along the contracting dimension. _We can multiply local shards without any communication._
+2. **[Case 2](#case-2-one-multiplicand-has-a-sharded-contracting-dimension):** one input has a sharded contracting dimension. _We typically "AllGather" the sharded input along the contracting dimension._
+3. **[Case 3](#case-3-both-multiplicands-have-sharded-contracting-dimensions):** both inputs are sharded along the contracting dimension. _We can multiply the local shards, then "AllReduce" the result._
+4. **[Case 4](#case-4-both-multiplicands-have-a-non-contracting-dimension-sharded-along-the-same-axis):** both inputs have a non-contracting dimension sharded along the same axis. We cannot proceed without AllGathering one of the two inputs first.
+
+You can think of these as rules that simply need to be followed, but it's also valuable to understand why these rules hold and how expensive they are. We'll go through each one of these in detail now.
 
 ### Case 1: neither multiplicand has a sharded contracting dimension
 
@@ -545,23 +546,23 @@ Our array in bfloat16 uses only 256 bytes total, and only 64 per device. Since w
 
 {% enddetails %}
 
-**Question 4 [matmul strategies]**: To perform $A[B, D] \cdot_D B[D_X, F] \to C[B, F]$, instead of performing $\text{AllGather}_X(B[D_X, F])$ and multiplying the fully replicated matrices (as we suggest in this doc), you could multiply the local shards resulting in $C[B, F]\\{U_X\\}$ and then $\text{AllReduce}_X(C[B, F] \\{ U_X\\})$. How many FLOPs and comms does each of these perform? Which is better and why?
+**Question 4 [matmul strategies]**: To perform $A[B, D] \cdot_D B[D_X, F] \to C[B, F]$, in this section we tell you to perform $\text{AllGather}_X(B[D_X, F])$ and multiply the fully replicated matrices (Case 2, *Strategy 1*). Instead, you could multiply the local shards like $A[B, D_X] \cdot_D B[D_X, F] \to C[B, F] \\{U_X\\}$ (Case 4, *Strategy 2*), and then $\text{AllReduce}_X(C[B, F] \\{ U_X\\})$. How many FLOPs and comms does each of these perform? Which is better and why?
 
 {% details Click here for the answer. %}
 
-Since we're multiplying our sharded matrices, the total FLOPs performed is much smaller than with the AllGather. We do $$2\cdot B\cdot D\cdot F / X$$ FLOPs and the resulting AllReduce communicates $$2 \cdot 2 \cdot B \cdot F$$ bytes in bfloat16. Thus, our total time for *Strategy 1* (no AllGather, just an AllReduce later on) is roughly
+Let's start with our baseline (*Strategy 1*). As we've shown, the cost of the AllGather is $2DF / W_\text{ici}$. Once we have the fully replicated arrays, the total compute time is $2BDF / C$ (where $C$ is our accelerator FLOPs/s, since each TPU does the same FLOPs). So we have
 
-$$T_\text{total} = \max\left(\frac{2BDF}{X * C}, \frac{4BF}{W_{ICI}}\right)$$
+$$T_\text{total (Strategy 1)} = \max\left(\frac{2BDF}{C}, \frac{2DF}{W_\text{ici}}\right)$$
 
-where $$C$$ is our accelerator FLOPs/s. The baseline does half as many comms and X times more FLOPs since the computation isn't sharded. This means we do $$2\cdot B\cdot D\cdot F$$ FLOPs and send $$2\cdot B\cdot D$$ bytes (since AllGather is half as expensive). So for *Strategy 2* we have
+By comparison, the new strategy (Strategy 2) does twice as many comms (for the AllReduce) and $1 / X$ fewer FLOPs since the computation is sharded. This means we do $2\cdot B\cdot D\cdot F / X$ FLOPs and the resulting AllReduce communicates $$2 \cdot 2 \cdot B \cdot F$$ bytes in bfloat16. Thus, our total time for *Strategy 2* (no AllGather, just an AllReduce later on) is roughly
 
-$$T_\text{total} = \max\left(\frac{2BDF}{C}, \frac{2BD}{W_{ICI}}\right)$$
+$$T_\text{total} = \max\left(\frac{2BDF}{X \cdot C}, \frac{4BF}{W_\text{ici}}\right)$$
 
-The question is: *which of these is bigger?* Strategy (1) is compute bound when $$D / (X * C) > 2 / W<_\text{ICI}$$, or when $$D / 2X > C / W_\text{ICI} \approx 2550 \rightarrow X < D / (2 * 2550)$$. We might reasonably expect $$D \approx 8k$$, so this would mean roughly $$X < 2$$ which is unlikely. So we're basically always comms bound in the first case. In the second case (baseline), we're comms bound when $$F < C / W_\text{ICI} = 2550$$ (which is rarely true), so we're generally compute-bound. Thus, the question of whether strategy (1) is better becomes whether
+The question is: *which of these is bigger?* Strategy (2) is compute bound when $D / (X \cdot C) > 2 / W_\text{ici}$, or when $D / 2X > C / W_\text{ici} \approx 2550 \rightarrow X < D / (2 * 2550)$. We might reasonably expect $D \approx 8k$, so this would mean roughly $X < 2$ which is unlikely. So we're basically always comms bound in the first case. In the second case (baseline), we're comms bound when $$F < C / W_\text{ici} = 2550$$ (which is rarely true), so we're generally compute-bound. Thus, the question of whether strategy (1) is better becomes whether
 
-$$T_\text{comms for Strategy 1} < T_\text{math for strategy 2} \Leftrightarrow \frac{4BF}{W_{ICI}} < \frac{2BDF}{C}$$
+$$T_\text{comms for Strategy 2} < T_\text{math for Strategy 1} \Leftrightarrow \frac{4BF}{W_{ici}} < \frac{2BDF}{C}$$
 
-This is true when $$2 / W_\text{ICI} < D / C$$, or when $$D > 2 * 2550 = 5100$$, which is usually true for large models. So this alternative strategy is typically better for large models.
+This is true when $2 / W_\text{ici} < D / C$, or when $D > 2 * 2550 = 5100$, which is usually true for large models. So this alternative strategy is typically better for large models.
 
 *Why don't we always do this?* Well, in practice we may do this sometimes, but it's typically rare to have the contracting dimension of one of the inputs to a matmul sharded along a axis that the other input isn't sharded over. For instance, if we're doing FSDP (explained in [Section 5](../training)), we'll sharded our parameters over the data dimension but our activations will _also be sharded along data_. So in this sense this doesn't show up much.
 
