@@ -637,7 +637,7 @@ Let's use LLaMA-2 13B as a basic model for this section. Here are some details:
 {% details Click here for the answer. %}
 
 * FFW parameters: $$3LDF$$ = `8.5e9`
-* Attention parameters: $$4DNH$$ = `4.2e9`
+* Attention parameters: $$4DNHL$$ = `4.2e9`
 * Vocabulary parameters: $$2VD$$ = `0.3e9`
 * Total: `8.5e9 + 4.2e9 + 0.39e9 = 13.1e9`, as expected!
 
