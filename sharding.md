@@ -185,7 +185,7 @@ Obviously, this depends on the computation involved.
 * For *elementwise* operations, there is **no overhead** for operating on a distributed array.  
 * When we wish to perform operations across elements resident on many devices, things get complicated. Thankfully, for most machine learning nearly all computation takes place in the form of matrix multiplications, and they are relatively simple to analyze.
 
-The rest of this section will deal with how to multiply sharded matrices. To a first approximation, this involves moving chunks of a matrix around so you can fully multiply or sum each chunk. **Each sharding will involve different communication.** For example, $A[I_X, J] \cdot B[J, K] \to C[I_X, K]$ can be multiplied without any communication because the *contracting dimension* (J, the one we're actually summing over) is unsharded. However, if we wanted the output unsharded (i.e. $A[I_X, J] \cdot B[J, K] \to C[I_X, K]$), we would need to copy $A$ or $C$ to every device. These two choices have different communication costs, so we need to calculate this cost and pick the lowest one.
+The rest of this section will deal with how to multiply sharded matrices. To a first approximation, this involves moving chunks of a matrix around so you can fully multiply or sum each chunk. **Each sharding will involve different communication.** For example, $A[I_X, J] \cdot B[J, K] \to C[I_X, K]$ can be multiplied without any communication because the *contracting dimension* (J, the one we're actually summing over) is unsharded. However, if we wanted the output unsharded (i.e. $A[I_X, J] \cdot B[J, K] \to C[I, K]$), we would need to copy $A$ or $C$ to every device. These two choices have different communication costs, so we need to calculate this cost and pick the lowest one.
 
 {% details You can think of this in terms of "block matrix multiplcation". %}
 
@@ -558,13 +558,13 @@ By comparison, the new strategy (Strategy 2) does twice as many comms (for the A
 
 $$T_\text{total} = \max\left(\frac{2BDF}{X \cdot C}, \frac{4BF}{W_\text{ici}}\right)$$
 
-The question is: *which of these is bigger?* Strategy (2) is compute bound when $D / (X \cdot C) > 2 / W_\text{ici}$, or when $D / 2X > C / W_\text{ici} \approx 2550 \rightarrow X < D / (2 * 2550)$. We might reasonably expect $D \approx 8k$, so this would mean roughly $X < 2$ which is unlikely. So we're basically always comms bound in the first case. In the second case (baseline), we're comms bound when $$F < C / W_\text{ici} = 2550$$ (which is rarely true), so we're generally compute-bound. Thus, the question of whether strategy (1) is better becomes whether
+The question is: *which of these is bigger?* Strategy (2) is compute bound when $D / (X \cdot C) > 2 / W_\text{ici}$, or when $D / 2X > C / W_\text{ici} \approx 2550 \rightarrow X < D / (2 * 2550)$. We might reasonably expect $D \approx 8k$, so this would mean roughly $X < 2$ which is unlikely. So we're basically always comms bound in the first case. In the first case (baseline), we're comms bound when $$D < C / W_\text{ici} = 2550$$ (which is rarely true), so we're generally compute-bound. Thus, the question of whether strategy (2) is better becomes whether
 
 $$T_\text{comms for Strategy 2} < T_\text{math for Strategy 1} \Leftrightarrow \frac{4BF}{W_{ici}} < \frac{2BDF}{C}$$
 
 This is true when $2 / W_\text{ici} < D / C$, or when $D > 2 * 2550 = 5100$, which is usually true for large models. So this alternative strategy is typically better for large models.
 
-*Why don't we always do this?* Well, in practice we may do this sometimes, but it's typically rare to have the contracting dimension of one of the inputs to a matmul sharded along a axis that the other input isn't sharded over. For instance, if we're doing FSDP (explained in [Section 5](../training)), we'll sharded our parameters over the data dimension but our activations will _also be sharded along data_. So in this sense this doesn't show up much.
+*Why don't we always do this?* Well, in practice we may do this sometimes, but it's typically rare to have the contracting dimension of one of the inputs to a matmul sharded along a axis that the other input isn't sharded over. For instance, if we're doing FSDP (explained in [Section 5](../training)), we'll shard our parameters over the data dimension but our activations will _also be sharded along data_. So in this sense this doesn't show up much.
 
 {% enddetails %}
 
