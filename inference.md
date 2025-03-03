@@ -185,7 +185,7 @@ Putting it all together, we get:
 
 $$\text{Multiheaded Attention Arithmetic Intensity} = \frac{4BSTD}{4BSD + 4BTD} = \frac{ST}{S+T}$$
 
-For prefill, $S=T$ since we're doing self-attention, so this simplifies to $T^2 / 2T = T / 2$. This is great because it means **the arithmetic intensity of attention during prefill is $\Theta(T)$**. That means it's quite easy to be compute-bound for attention. As long as our batch size _and sequence length_ are both fairly large, we'll be fine!
+For prefill, $S=T$ since we're doing self-attention, so this simplifies to $T^2 / 2T = T / 2$. This is great because it means **the arithmetic intensity of attention during prefill is $\Theta(T)$**. That means it's quite easy to be compute-bound for attention. As long as our sequence length is fairly large, we'll be fine!
 
 But since generation has a trivial sequence dim, and the $B$ and $D$ dims cancel, we can make the approximation:
 
