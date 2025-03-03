@@ -530,7 +530,7 @@ Our array is only sharded along X, which has size 4, so effectively each shard h
 
 We have a wraparound link on all axes because we have a full `4x4x4` cube, so we have 9e10 bidirectional bandwidth to work with.
 
-1. Because we're just gathering over one axis and the other is sharded, we're effectively gathering $\frac{2BD}{Y}$ bytes over 1 axis. Since our ICI bandwidth for TPU v4p is 9e10 bytes/second bidirectional, this will take $\frac{2BD}{9e10 \cdot Y} = \frac{2 \cdot 1024 \cdot 4096}{9e10 \cdot 4} = 23 \mu s$.
+1. Because we're just gathering over one axis and the other is sharded, we're effectively gathering $2BD / Y$ bytes over 1 axis. Since our ICI bandwidth for TPU v4p is 9e10 bytes/second bidirectional, this will take $2BD / (9e10 \cdot Y) = 2 \cdot 1024 \cdot 4096 / (9e10 \cdot 4) = 23 \mu s$.
 
 2. We have twice the bandwidth as before but we're AllGathering the full array, so `T = 2BD / (2 * W) = 2*1024*4096 / (2 * 9e10) = 46us`. This is far from the latency bound of 4us (1us per hop), so we're fine.
 
