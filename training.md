@@ -554,12 +554,12 @@ So this gives us a nice recipe to fit on a single pod with BS=3.5M. We'd use the
 
 **To go larger than one pod, we need to scale over DCN.** Because DCN has lower bandwidth, it's typically too slow to do much useful FSDP. Instead, we do pure data parallelism over the DCN axis and FSDP within a pod. Lets calculate whether the Data Center Network (DCN) holds up.
 
-With pure data parallelism over DCN, we need to sync the weights and optimizer states during each step (as the model completes its backward pass we need to complete the AllReduce). We can actually just borrow the math from the pure data parallelism section above which tells us that we become comms bound when the $\text{per pod batch size} > C_\text{pod} / W_\text{dcn}$ where the RHS here is the total compute and total bandwidth for the entire pod.
+With pure data parallelism over DCN, we need to sync the weights and optimizer states during each step (as the model completes its backward pass we need to complete the AllReduce). We can actually just borrow the math from the pure data parallelism section above which tells us that we become comms bound when the $\text{per pod batch size} < C_\text{pod} / W_\text{dcn}$ where the RHS here is the total compute and total bandwidth for the entire pod.
 
 * Our total DCN ingress+egress bandwidth is 2.5e10 per host, with 4 chips per host. This gives us ~2000 hosts in the slice, and a total of `5e13` bytes of bandwidth.  
 * $$C_\text{pod}$$ here is the pod size times the per-chip compute, which is `8k * 4.5e14 = 3.8e18` FLOPs.
 
-As before, we become bottlenecked when $T_\text{math} < T_\text{comms}$ which happens when our $\text{per pod batch size} > C / W_\text{DCN} = 3.8e18 / 5e13 = 76,000$ (our pod level DCN operational intensity). For LLaMA-3, that's not going to be a problem since our per-pod batch size is much higher than that, but it could become an issue if we were to train on smaller slices (e.g. v5e). 
+As before, we become bottlenecked when $T_\text{math} < T_\text{comms}$ which happens when our $\text{per pod batch size} < C / W_\text{DCN} = 3.8e18 / 5e13 = 76,000$ (our pod level DCN operational intensity). For LLaMA-3, that's not going to be a problem since our per-pod batch size is much higher than that, but it could become an issue if we were to train on smaller slices (e.g. v5e). 
 
 <p markdown=1 class="takeaway">**Takeaway:** This means we can scale fairly arbitrarily across pods, so e.g. with 10 pods of 8960 chips we could do a global batch size of about 40M tokens on 89,600 chips, training LLaMA-3 70B in about 2 days.</p>
 
