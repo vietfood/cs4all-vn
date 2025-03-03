@@ -308,9 +308,9 @@ We would similarly AllGather along **X** to remove the output sharding, however 
 
 **How long does this take?** Let's take the bidirectional AllGather and calculate how long it takes. Let $$V$$ be the number of bytes in the array, and $$\lvert X\rvert$$ be the number of shards on the contracting dimension. Then from the above diagram, each hop sends $V / \lvert X\rvert$ bytes in each direction, so each hop takes
 
-$$T_{hop} = \frac{2 \cdot V}{|X| \cdot W_{ICI}}$$
+$$T_{hop} = \frac{2 \cdot V}{|X| \cdot W_\text{ICI}}$$
 
-where $$W_\text{ICI}$$ is the **bidirectional** ICI bandwidth. We need to send a total of $\lvert X\rvert / 2$ hops to reach every TPU<d-footnote>technically, $\lceil | X | / 2 \rceil$</d-footnote>, so the total reduction takes
+where $$W_\text{ICI}$$ is the **bidirectional** ICI bandwidth.<d-footnote>The factor of 2 in the numerator comes from the fact that we're using the bidirectional bandwidth. We send $V / |X|$ in each direction, or $2V / |X|$ total.</d-footnote> We need to send a total of $\lvert X\rvert / 2$ hops to reach every TPU<d-footnote>technically, $\lceil | X | / 2 \rceil$</d-footnote>, so the total reduction takes
 
 $$T_{total} = \frac{2 \cdot V \cdot |X|}{2 \cdot |X| \cdot W_\text{ICI}}$$
 
@@ -534,7 +534,7 @@ We have a wraparound link on all axes because we have a full `4x4x4` cube, so we
 
 2. We have twice the bandwidth as before but we're AllGathering the full array, so `T = 2BD / (2 * W) = 2*1024*4096 / (2 * 9e10) = 46us`. This is far from the latency bound of 4us (1us per hop), so we're fine.
 
-3. The cost of an AllReduce is twice that of an AllGather, so the cost is about $4BD / W$, or roughly `4 * 1024 * 4096 / 9e10 = 190us`.
+3. The cost of an AllReduce is twice that of an AllGather. Each shard has size $2BD / (X * Y)$, so the cost is about $4BD / (X * Y * W)$, or roughly `4 * 1024 * 4096 / (16 * 9e10) = 11.6us`.
 
 {% enddetails %}
 
@@ -542,7 +542,7 @@ We have a wraparound link on all axes because we have a full `4x4x4` cube, so we
 
 {% details Click here for the answer. %}
 
-Our array in bfloat16 uses only 256 bytes total, and only 64 per device. Since we have an axis of size 4 on a TPU v4p, we have a wraparound link, so we can do the AllGather by sending half the bytes in each direction, meaning only 32 bytes in each direction. With `4.5e10` of unidirectional bandwidth, each hop would take roughly `32 / 4.5e10 ~ 0`, so we're definitely latency bound. Counting the number of hops, we can do the full gather in only 2 hops, so roughly 2us a good estimate.
+Our array in bfloat16 uses only 256 bytes total, and only 64 per device. Since we have an axis of size 4 on a TPU v4p, we have a wraparound link, so we can send the array in both directions. With `4.5e10` of unidirectional bandwidth, each hop would take roughly `64 / 4.5e10 ~ 0`, so we're definitely latency bound. Counting the number of hops, we can do the full gather in only 2 hops, so roughly 2us a good estimate.
 
 {% enddetails %}
 
