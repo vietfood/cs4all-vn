@@ -143,16 +143,16 @@ Let's look at FLOPs now! *Remember the general rules for training from [Section 
 
 {% details Click here for the answer, once you've thought about it! %}
 
-**Answer**: This question is primarily asking about memory usage, since that's the only strict constraint on available compute. During training, we have three primary uses of HBM: model parameters, optimizer state, and gradient checkpoints. If we assume bfloat16 weights, float32 optimizer state, and a _very_ conservative gradient checkpointing scheme (3 times per layer), we have:
+**Answer**: This question is primarily asking about memory usage, since that's the only strict constraint on available compute. During training, we have three primary uses of HBM: model parameters, optimizer state, and gradient checkpoints. If we assume bfloat16 weights, float32 optimizer state, and a _very_ conservative gradient checkpointing scheme (4 times per layer), we have:
 
 | **Params** | 2 * 70GB | ~140GB |
 | **Optimizer State** | 8 * 70GB | ~560GB |
-| **Gradient Checkpoints** | 2 * 8192 * 4e6 * 3 * 80 | ~20.9TB |
+| **Gradient Checkpoints** | 2 * 8192 * 4e6 * 4 * 80 | ~20.9TB |
 | **Total**                |                         | ~21.6TB |
 
 The total here is about 21.6TB. You notice that gradient checkpointing strongly dominates the memory picture, even with a very conservative checkpointing scheme. We could technically go to 1 checkpoint per layer, or do microbatching, but this is a reasonable picture. With these assumptions, since each TPU v5p has 96GB of HBM, we need `21.6e12 / 96e9 = 225` TPUs. That's not very much actually!
 
-*Why wouldn't we do this?* Well, because it would take us `44 days * 8960 / 171 = 1752 days` to train. That's 6 and a half years. **That's a lot.** Still, this makes it clear that we're using these large clusters not because we're bound by memory but rather because we need the extra FLOPs.
+*Why wouldn't we do this?* Well, because it would take us `44 days * 8960 / 225 = 1752 days` to train. That's 6 and a half years. **That's a lot.** Still, this makes it clear that we're using these large clusters not because we're bound by memory but rather because we need the extra FLOPs.
 
 {% enddetails %}
 
