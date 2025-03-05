@@ -95,10 +95,10 @@ For instance, an NVIDIA H100 can perform about 9.89e14 bfloat16<d-footnote>bf16 
 
 **Communication between chips:**  When we distribute a model *across multiple accelerators*, tensors frequently need to be transferred between them. There are often a few options for this on our hardware (ICI, DCN, and PCIe), each with different bandwidths. 
 
-Whether the communication is within a chip or between chips, we measure this in GB/s and estimate the total communication time with:
+Whether the communication is within a chip or between chips, we measure this in bytes/s and estimate the total communication time with:
 
 $$\begin{equation}
-T_\text{comms} = \frac{\text{Communication GB}}{\text{Network/Memory Bandwidth GB/s}}
+T_\text{comms} = \frac{\text{Communication Bytes}}{\text{Network/Memory Bandwidth Bytes/s}}
 \end{equation}$$
 
 Typically (but not always), computation within a single chip can be overlapped with communication within a chip and between chips. This means **we can lower-bound training and inference time by using the maximum of computation and communication time**. We can also **upper-bound with their sum**. In practice, we optimize against the maximum as the algebra is simpler and we can usually come close to this bound by overlapping our communication and computation. If we optimize with the maximum in mind then the lower and upper bounds differ by at most a factor of 2 since $T_\text{math} + T_\text{comms} \leq 2 * \max(T_\text{math}, T_\text{comms})$. We then increase accuracy beyond this by modeling 'overlap regions' and overheads, which can be informed by profiling your specific model and target system.
@@ -116,14 +116,14 @@ If we assume we can perfectly overlap communication and computation, when $T_\te
 **Definition:** the arithmetic intensity of an algorithm is given by the ratio of the total FLOPs it performs to the number of bytes it needs to communicate — either within a chip or between chips.
 
 $$\begin{equation}
-\text{Arithmetic Intensity} = \frac{\text{Computation FLOPs}}{\text{Communication GB}}
+\text{Arithmetic Intensity} = \frac{\text{Computation FLOPs}}{\text{Communication Bytes}}
 \end{equation}$$
 
 Arithmetic intensity measures the "FLOPs per byte" of a given operation. To a first order, when our arithmetic intensity is high, $T_\text{math}$ is large compared to $T_\text{comms}$ and we typically use most of the available FLOPs. When the opposite is true, we spent more time on comms and waste FLOPs. The point where this crossover happens is the "peak arithmetic intensity" of our hardware, the ratio of peak accelerator FLOPs/s to accelerator bandwidth.
 
 $$\begin{align*}
-T_\text{math} > T_\text{comms} \Leftrightarrow \frac{\text{Computation FLOPs}} {\text{Accelerator FLOPs/s}} > \frac{\text{Communication GB}}{\text{Bandwidth GB/s}} & \\[0.5em]
-\Leftrightarrow \frac{\text{Computation FLOPs}}{\text{Communication GB}} > \frac{\text{Accelerator FLOPs/s}}{\text{Bandwidth GB/s}} & \\[0.5em]
+T_\text{math} > T_\text{comms} \Leftrightarrow \frac{\text{Computation FLOPs}} {\text{Accelerator FLOPs/s}} > \frac{\text{Communication Bytes}}{\text{Bandwidth Bytes/s}} & \\[0.5em]
+\Leftrightarrow \frac{\text{Computation FLOPs}}{\text{Communication Bytes}} > \frac{\text{Accelerator FLOPs/s}}{\text{Bandwidth Bytes/s}} & \\[0.5em]
 \Leftrightarrow \text{Intensity}(\text{Computation}) > \text{Intensity}(\text{Accelerator}) & \\
 \end{align*}$$
 
