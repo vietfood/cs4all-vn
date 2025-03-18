@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: How To Scale Your Model # the website title (if blank, full name will be used instead)
+title: 🧑‍💻cs4all-vn # the website title (if blank, full name will be used instead)
 first_name:
 middle_name:
 last_name:
@@ -12,12 +12,12 @@ description: > # the ">" symbol means to ignore newlines until "footer_text:"
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-keywords: scaling, jax, llms, transformers, tpus, google, deepmind, parallelism, pallas  # add your own keywords or leave empty
-lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
+keywords: # add your own keywords or leave empty
+lang: # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: favicon.png # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
-url: https://jax-ml.github.io # the base hostname & protocol for your site
-baseurl: "/scaling-book" # the subpath of your site, e.g. /blog/. Leave blank for root
+url: https://cs4all-vn.github.io # the base hostname & protocol for your site
+baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
 last_updated: false # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
 back_to_top: true # set to false to disable the back to top button
@@ -232,6 +232,11 @@ defaults:
       path: "assets"
     values:
       sitemap: false
+  - scope:
+      path: "_pages"
+      type: "pages"
+    values:
+      permalink: /:basename/ # make URL of pages in the folder _pages as on the root.
 
 sass:
   style: compressed
