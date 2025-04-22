@@ -517,6 +517,7 @@
       if (braceLevel <= 0 && text.slice(index, index + delimLength) === delimiter) {
         return index;
       } else if (character === "\\") {
+        // Skip next character (escaped character)
         index++;
       } else if (character === "{") {
         braceLevel++;
@@ -530,172 +531,259 @@
     return -1;
   };
 
-  const splitAtDelimiters = function (startData, leftDelim, rightDelim, display) {
-    const finalData = [];
-
-    for (let i = 0; i < startData.length; i++) {
-      if (startData[i].type === "text") {
-        const text = startData[i].data;
-
-        let lookingForLeft = true;
-        let currIndex = 0;
-        let nextIndex;
-
-        nextIndex = text.indexOf(leftDelim);
-        if (nextIndex !== -1) {
-          currIndex = nextIndex;
-          finalData.push({
-            type: "text",
-            data: text.slice(0, currIndex),
-          });
-          lookingForLeft = false;
-        }
-
-        while (true) {
-          // eslint-disable-line no-constant-condition
-          if (lookingForLeft) {
-            nextIndex = text.indexOf(leftDelim, currIndex);
-            if (nextIndex === -1) {
-              break;
-            }
-
-            finalData.push({
-              type: "text",
-              data: text.slice(currIndex, nextIndex),
-            });
-
-            currIndex = nextIndex;
-          } else {
-            nextIndex = findEndOfMath(rightDelim, text, currIndex + leftDelim.length);
-            if (nextIndex === -1) {
-              break;
-            }
-
-            finalData.push({
-              type: "math",
-              data: text.slice(currIndex + leftDelim.length, nextIndex),
-              rawData: text.slice(currIndex, nextIndex + rightDelim.length),
-              display: display,
-            });
-
-            currIndex = nextIndex + rightDelim.length;
-          }
-
-          lookingForLeft = !lookingForLeft;
-        }
-
-        finalData.push({
-          type: "text",
-          data: text.slice(currIndex),
-        });
-      } else {
-        finalData.push(startData[i]);
-      }
-    }
-
-    return finalData;
+  // NEW: Helper function from official auto-render
+  const escapeRegex = function (string) {
+    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
   };
 
-  const splitWithDelimiters = function (text, delimiters) {
-    let data = [{ type: "text", data: text }];
-    for (let i = 0; i < delimiters.length; i++) {
-      const delimiter = delimiters[i];
-      data = splitAtDelimiters(data, delimiter.left, delimiter.right, delimiter.display || false);
+  // NEW: Regex to check for AMS environments, used for specific handling
+  const amsRegex = /^\\begin{/;
+
+  // REPLACED: This function now mimics the official auto-render logic
+  const splitAtDelimiters = function (text, delimiters) {
+    let index;
+    const data = [];
+    // Create a regex to find any left delimiter
+    const regexLeft = new RegExp("(" + delimiters.map(x => escapeRegex(x.left)).join("|") + ")");
+
+    while (true) {
+      // Find the *first* occurrence of any left delimiter
+      index = text.search(regexLeft);
+
+      // If no left delimiter found, add the rest of the text and break
+      if (index === -1) {
+        break;
+      }
+
+      // Add the text before the delimiter if it exists
+      if (index > 0) {
+        data.push({
+          type: "text",
+          data: text.slice(0, index)
+        });
+        text = text.slice(index); // Now text starts with the delimiter
+      }
+
+      // Find which delimiter was matched
+      const i = delimiters.findIndex(delim => text.startsWith(delim.left));
+      if (i === -1) break; // Should not happen based on regex search
+
+      const matchedDelimiter = delimiters[i];
+
+      // Find the end of the math expression using the corresponding right delimiter
+      index = findEndOfMath(matchedDelimiter.right, text, matchedDelimiter.left.length);
+
+      // If no right delimiter found, add the rest as text and break
+      if (index === -1) {
+        break;
+      }
+
+      // Extract the raw data and the math content
+      const rawData = text.slice(0, index + matchedDelimiter.right.length);
+      // For AMS environments, the math is the raw data; otherwise, strip delimiters
+      const math = amsRegex.test(rawData) ? rawData : text.slice(matchedDelimiter.left.length, index);
+
+      data.push({
+        type: "math",
+        data: math,
+        rawData: rawData, // Keep raw data for error reporting
+        display: matchedDelimiter.display
+      });
+
+      // Remove the processed math section from the text
+      text = text.slice(index + matchedDelimiter.right.length);
     }
+
+    // Add any remaining text
+    if (text !== "") {
+      data.push({
+        type: "text",
+        data: text
+      });
+    }
+
     return data;
   };
+
+  // REMOVED: splitWithDelimiters is no longer needed, splitAtDelimiters handles it
 
   /* Note: optionsCopy is mutated by this method. If it is ever exposed in the
    * API, we should copy it before mutating.
    */
+  // MODIFIED: To use the new splitAtDelimiters and create d-math tags
   const renderMathInText = function (text, optionsCopy) {
-    const data = splitWithDelimiters(text, optionsCopy.delimiters);
+    // Use the new, more robust splitting function
+    const data = splitAtDelimiters(text, optionsCopy.delimiters);
+
+    // If the text contains no math, return null to signal no changes needed.
+    if (data.length === 1 && data[0].type === 'text') {
+      return null;
+    }
+
     const fragment = document.createDocumentFragment();
 
     for (let i = 0; i < data.length; i++) {
       if (data[i].type === "text") {
         fragment.appendChild(document.createTextNode(data[i].data));
       } else {
-        const tag = document.createElement("d-math");
-        const math = data[i].data;
-        // Override any display mode defined in the settings with that
-        // defined by the text itself
+        const tag = document.createElement("d-math"); // Create d-math tag
+        let math = data[i].data;
+
+        // Apply preProcess hook if provided
+        if (optionsCopy.preProcess) {
+          try {
+            math = optionsCopy.preProcess(math);
+          } catch (e) {
+            optionsCopy.errorCallback("KaTeX auto-render: preProcess failed for `" + data[i].data + "` with error: ", e);
+            fragment.appendChild(document.createTextNode(data[i].rawData)); // Append raw data on error
+            continue;
+          }
+        }
+
+        // Set display mode based on delimiter
         optionsCopy.displayMode = data[i].display;
+
+        // Prepare the d-math tag. The actual rendering happens *inside* the d-math component.
+        // We just set the content and attributes here.
         try {
           tag.textContent = math;
           if (optionsCopy.displayMode) {
             tag.setAttribute("block", "");
           }
+          // Add the d-math tag to the fragment
+          fragment.appendChild(tag);
+
         } catch (e) {
-          if (!(e instanceof katex.ParseError)) {
-            throw e;
-          }
-          optionsCopy.errorCallback("KaTeX auto-render: Failed to parse `" + data[i].data + "` with ", e);
-          fragment.appendChild(document.createTextNode(data[i].rawData));
+          // This catch block might be less relevant now as katex.render isn't called here,
+          // but we keep error reporting for completeness (e.g., if preProcess fails).
+          // The d-math component itself should handle KaTeX ParseErrors during its render.
+          // We still rely on the errorCallback for logging.
+          optionsCopy.errorCallback("KaTeX auto-render: Failed to process `" + data[i].data + "` with error: ", e);
+          fragment.appendChild(document.createTextNode(data[i].rawData)); // Append raw data on error
           continue;
         }
-        fragment.appendChild(tag);
       }
     }
 
     return fragment;
   };
 
+  // MODIFIED: To include adjacent text node concatenation and ignoredClasses check
   const renderElem = function (elem, optionsCopy) {
     for (let i = 0; i < elem.childNodes.length; i++) {
       const childNode = elem.childNodes[i];
-      if (childNode.nodeType === 3) {
-        // Text node
-        const text = childNode.textContent;
-        if (optionsCopy.mightHaveMath(text)) {
-          const frag = renderMathInText(text, optionsCopy);
+
+      if (childNode.nodeType === 3) { // Node.TEXT_NODE
+        // Concatenate adjacent text nodes. Needed for browsers like WebKit that
+        // split very large text nodes into smaller ones.
+        let textContentConcat = childNode.textContent;
+        let sibling = childNode.nextSibling;
+        let nSiblings = 0;
+        while (sibling && sibling.nodeType === Node.TEXT_NODE) {
+          textContentConcat += sibling.textContent;
+          sibling = sibling.nextSibling;
+          nSiblings++;
+        }
+
+        // Process the concatenated text content
+        const frag = renderMathInText(textContentConcat, optionsCopy);
+
+        if (frag) {
+          // If math was found and processed, replace the original text node(s)
+          // Remove the subsequent text nodes that were concatenated.
+          for (let j = 0; j < nSiblings; j++) {
+            childNode.nextSibling.remove(); // Use remove() for modern browsers
+          }
+          // Replace the original node and update the loop counter
           i += frag.childNodes.length - 1;
           elem.replaceChild(frag, childNode);
+        } else {
+          // If no math found in the concatenated text, skip the siblings
+          i += nSiblings;
         }
-      } else if (childNode.nodeType === 1) {
-        // Element node
-        const shouldRender = optionsCopy.ignoredTags.indexOf(childNode.nodeName.toLowerCase()) === -1;
+
+      } else if (childNode.nodeType === 1) { // Node.ELEMENT_NODE
+        // Check ignored tags and classes
+        const className = ' ' + childNode.className + ' '; // Add spaces for accurate class matching
+        const shouldRender =
+          optionsCopy.ignoredTags.indexOf(childNode.nodeName.toLowerCase()) === -1 &&
+          optionsCopy.ignoredClasses.every(cls => className.indexOf(' ' + cls + ' ') === -1);
 
         if (shouldRender) {
-          renderElem(childNode, optionsCopy);
+          renderElem(childNode, optionsCopy); // Recurse
         }
       }
-      // Otherwise, it's something else, and ignore it.
+      // Ignore other node types (comments, etc.)
     }
   };
 
+  // MODIFIED: Updated default options to match official ones
   const defaultAutoRenderOptions = {
     delimiters: [
       { left: "$$", right: "$$", display: true },
-      { left: "\\[", right: "\\]", display: true },
       { left: "\\(", right: "\\)", display: false },
-      // LaTeX uses this, but it ruins the display of normal `$` in text:
+      // LaTeX environments
+      { left: "\\begin{equation}", right: "\\end{equation}", display: true },
+      { left: "\\begin{align}", right: "\\end{align}", display: true },
+      { left: "\\begin{alignat}", right: "\\end{alignat}", display: true },
+      { left: "\\begin{gather}", right: "\\end{gather}", display: true },
+      { left: "\\begin{CD}", right: "\\end{CD}", display: true },
+      // Must come AFTER AMS environments
+      { left: "\\[", right: "\\]", display: true },
+      // LaTeX uses $...$, but it ruins the display of normal `$` in text:
       // {left: '$', right: '$', display: false},
     ],
-
-    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "svg"],
-
+    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option", "svg", "d-code"], // Added svg, d-code
+    ignoredClasses: [],
     errorCallback: function (msg, err) {
       console.error(msg, err);
     },
+    macros: {}, // Add macros option
+    preProcess: null, // Add preProcess option
   };
 
+  // MODIFIED: Simplified and uses updated defaults
   const renderMathInElement = function (elem, options) {
     if (!elem) {
       throw new Error("No element provided to render");
     }
 
+    // Create a shallow copy of the options object, merging with defaults
     const optionsCopy = Object.assign({}, defaultAutoRenderOptions, options);
-    const delimiterStrings = optionsCopy.delimiters.flatMap((d) => [d.left, d.right]);
-    const mightHaveMath = (text) => delimiterStrings.some((d) => text.indexOf(d) !== -1);
-    optionsCopy.mightHaveMath = mightHaveMath;
+
+    // Update delimiters if provided in options
+    if (options && options.delimiters) {
+      optionsCopy.delimiters = options.delimiters;
+    }
+    // Update ignoredTags if provided
+    if (options && options.ignoredTags) {
+      optionsCopy.ignoredTags = options.ignoredTags;
+    }
+    // Update ignoredClasses if provided
+    if (options && options.ignoredClasses) {
+      optionsCopy.ignoredClasses = options.ignoredClasses;
+    }
+    // Update errorCallback if provided
+    if (options && options.errorCallback) {
+      optionsCopy.errorCallback = options.errorCallback;
+    }
+    // Update macros if provided
+    if (options && options.macros) {
+      optionsCopy.macros = options.macros;
+    }
+    // Update preProcess if provided
+    if (options && options.preProcess) {
+      optionsCopy.preProcess = options.preProcess;
+    }
+
+    // Start the recursive rendering process
     renderElem(elem, optionsCopy);
   };
 
   // Copyright 2018 The Distill Template Authors
 
-  const katexJSURL = "https://distill.pub/third-party/katex/katex.min.js";
-  const katexCSSTag = '<link rel="stylesheet" href="https://distill.pub/third-party/katex/katex.min.css" crossorigin="anonymous">';
+  const katexJSURL = "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js";
+  const katexCSSTag = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">';
 
   const T = Template(
     "d-math",
@@ -734,7 +822,16 @@ ${math}
     static get katexOptions() {
       if (!DMath._katexOptions) {
         DMath._katexOptions = {
-          delimiters: [{ left: "$$", right: "$$", display: false }],
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\(', right: '\)', display: false },
+            { left: '\[', right: '\]', display: true },
+            { left: "\begin{equation}", right: "\end{equation}", display: true },
+            { left: "\begin{align}", right: "\end{align}", display: true },
+          ],
+          // • rendering keys, e.g.:
+          throwOnError: false
         };
       }
       return DMath._katexOptions;
@@ -1643,304 +1740,6 @@ d-appendix > distill-appendix {
     return (module = { exports: {} }), fn(module, module.exports), module.exports;
   }
 
-  var bibtexParse = createCommonjsModule(function (module, exports) {
-    /* start bibtexParse 0.0.22 */
-
-    //Original work by Henrik Muehe (c) 2010
-    //
-    //CommonJS port by Mikola Lysenko 2013
-    //
-    //Port to Browser lib by ORCID / RCPETERS
-    //
-    //Issues:
-    //no comment handling within strings
-    //no string concatenation
-    //no variable values yet
-    //Grammar implemented here:
-    //bibtex -> (string | preamble | comment | entry)*;
-    //string -> '@STRING' '{' key_equals_value '}';
-    //preamble -> '@PREAMBLE' '{' value '}';
-    //comment -> '@COMMENT' '{' value '}';
-    //entry -> '@' key '{' key ',' key_value_list '}';
-    //key_value_list -> key_equals_value (',' key_equals_value)*;
-    //key_equals_value -> key '=' value;
-    //value -> value_quotes | value_braces | key;
-    //value_quotes -> '"' .*? '"'; // not quite
-    //value_braces -> '{' .*? '"'; // not quite
-    (function (exports) {
-      function BibtexParser() {
-        this.months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-        this.notKey = [",", "{", "}", " ", "="];
-        this.pos = 0;
-        this.input = "";
-        this.entries = new Array();
-
-        this.currentEntry = "";
-
-        this.setInput = function (t) {
-          this.input = t;
-        };
-
-        this.getEntries = function () {
-          return this.entries;
-        };
-
-        this.isWhitespace = function (s) {
-          return s == " " || s == "\r" || s == "\t" || s == "\n";
-        };
-
-        this.match = function (s, canCommentOut) {
-          if (canCommentOut == undefined || canCommentOut == null) canCommentOut = true;
-          this.skipWhitespace(canCommentOut);
-          if (this.input.substring(this.pos, this.pos + s.length) == s) {
-            this.pos += s.length;
-          } else {
-            throw "Token mismatch, expected " + s + ", found " + this.input.substring(this.pos);
-          }
-          this.skipWhitespace(canCommentOut);
-        };
-
-        this.tryMatch = function (s, canCommentOut) {
-          if (canCommentOut == undefined || canCommentOut == null) canCommentOut = true;
-          this.skipWhitespace(canCommentOut);
-          if (this.input.substring(this.pos, this.pos + s.length) == s) {
-            return true;
-          } else {
-            return false;
-          }
-        };
-
-        /* when search for a match all text can be ignored, not just white space */
-        this.matchAt = function () {
-          while (this.input.length > this.pos && this.input[this.pos] != "@") {
-            this.pos++;
-          }
-          if (this.input[this.pos] == "@") {
-            return true;
-          }
-          return false;
-        };
-
-        this.skipWhitespace = function (canCommentOut) {
-          while (this.isWhitespace(this.input[this.pos])) {
-            this.pos++;
-          }
-          if (this.input[this.pos] == "%" && canCommentOut == true) {
-            while (this.input[this.pos] != "\n") {
-              this.pos++;
-            }
-            this.skipWhitespace(canCommentOut);
-          }
-        };
-
-        this.value_braces = function () {
-          var bracecount = 0;
-          this.match("{", false);
-          var start = this.pos;
-          var escaped = false;
-          while (true) {
-            if (!escaped) {
-              if (this.input[this.pos] == "}") {
-                if (bracecount > 0) {
-                  bracecount--;
-                } else {
-                  var end = this.pos;
-                  this.match("}", false);
-                  return this.input.substring(start, end);
-                }
-              } else if (this.input[this.pos] == "{") {
-                bracecount++;
-              } else if (this.pos >= this.input.length - 1) {
-                throw "Unterminated value";
-              }
-            }
-            if (this.input[this.pos] == "\\" && escaped == false) escaped = true;
-            else escaped = false;
-            this.pos++;
-          }
-        };
-
-        this.value_comment = function () {
-          var str = "";
-          var brcktCnt = 0;
-          while (!(this.tryMatch("}", false) && brcktCnt == 0)) {
-            str = str + this.input[this.pos];
-            if (this.input[this.pos] == "{") brcktCnt++;
-            if (this.input[this.pos] == "}") brcktCnt--;
-            if (this.pos >= this.input.length - 1) {
-              throw "Unterminated value:" + this.input.substring(start);
-            }
-            this.pos++;
-          }
-          return str;
-        };
-
-        this.value_quotes = function () {
-          this.match('"', false);
-          var start = this.pos;
-          var escaped = false;
-          while (true) {
-            if (!escaped) {
-              if (this.input[this.pos] == '"') {
-                var end = this.pos;
-                this.match('"', false);
-                return this.input.substring(start, end);
-              } else if (this.pos >= this.input.length - 1) {
-                throw "Unterminated value:" + this.input.substring(start);
-              }
-            }
-            if (this.input[this.pos] == "\\" && escaped == false) escaped = true;
-            else escaped = false;
-            this.pos++;
-          }
-        };
-
-        this.single_value = function () {
-          var start = this.pos;
-          if (this.tryMatch("{")) {
-            return this.value_braces();
-          } else if (this.tryMatch('"')) {
-            return this.value_quotes();
-          } else {
-            var k = this.key();
-            if (k.match("^[0-9]+$")) return k;
-            else if (this.months.indexOf(k.toLowerCase()) >= 0) return k.toLowerCase();
-            else throw "Value expected:" + this.input.substring(start) + " for key: " + k;
-          }
-        };
-
-        this.value = function () {
-          var values = [];
-          values.push(this.single_value());
-          while (this.tryMatch("#")) {
-            this.match("#");
-            values.push(this.single_value());
-          }
-          return values.join("");
-        };
-
-        this.key = function () {
-          var start = this.pos;
-          while (true) {
-            if (this.pos >= this.input.length) {
-              throw "Runaway key";
-            } // а-яА-Я is Cyrillic
-            //console.log(this.input[this.pos]);
-            if (this.notKey.indexOf(this.input[this.pos]) >= 0) {
-              return this.input.substring(start, this.pos);
-            } else {
-              this.pos++;
-            }
-          }
-        };
-
-        this.key_equals_value = function () {
-          var key = this.key();
-          if (this.tryMatch("=")) {
-            this.match("=");
-            var val = this.value();
-            return [key, val];
-          } else {
-            throw "... = value expected, equals sign missing:" + this.input.substring(this.pos);
-          }
-        };
-
-        this.key_value_list = function () {
-          var kv = this.key_equals_value();
-          this.currentEntry["entryTags"] = {};
-          this.currentEntry["entryTags"][kv[0]] = kv[1];
-          while (this.tryMatch(",")) {
-            this.match(",");
-            // fixes problems with commas at the end of a list
-            if (this.tryMatch("}")) {
-              break;
-            }
-            kv = this.key_equals_value();
-            this.currentEntry["entryTags"][kv[0]] = kv[1];
-          }
-        };
-
-        this.entry_body = function (d) {
-          this.currentEntry = {};
-          this.currentEntry["citationKey"] = this.key();
-          this.currentEntry["entryType"] = d.substring(1);
-          this.match(",");
-          this.key_value_list();
-          this.entries.push(this.currentEntry);
-        };
-
-        this.directive = function () {
-          this.match("@");
-          return "@" + this.key();
-        };
-
-        this.preamble = function () {
-          this.currentEntry = {};
-          this.currentEntry["entryType"] = "PREAMBLE";
-          this.currentEntry["entry"] = this.value_comment();
-          this.entries.push(this.currentEntry);
-        };
-
-        this.comment = function () {
-          this.currentEntry = {};
-          this.currentEntry["entryType"] = "COMMENT";
-          this.currentEntry["entry"] = this.value_comment();
-          this.entries.push(this.currentEntry);
-        };
-
-        this.entry = function (d) {
-          this.entry_body(d);
-        };
-
-        this.bibtex = function () {
-          while (this.matchAt()) {
-            var d = this.directive();
-            this.match("{");
-            if (d == "@STRING") {
-              this.string();
-            } else if (d == "@PREAMBLE") {
-              this.preamble();
-            } else if (d == "@COMMENT") {
-              this.comment();
-            } else {
-              this.entry(d);
-            }
-            this.match("}");
-          }
-        };
-      }
-      exports.toJSON = function (bibtex) {
-        var b = new BibtexParser();
-        b.setInput(bibtex);
-        b.bibtex();
-        return b.entries;
-      };
-
-      /* added during hackathon don't hate on me */
-      exports.toBibtex = function (json) {
-        var out = "";
-        for (var i in json) {
-          out += "@" + json[i].entryType;
-          out += "{";
-          if (json[i].citationKey) out += json[i].citationKey + ", ";
-          if (json[i].entry) out += json[i].entry;
-          if (json[i].entryTags) {
-            var tags = "";
-            for (var jdx in json[i].entryTags) {
-              if (tags.length != 0) tags += ", ";
-              tags += jdx + "= {" + json[i].entryTags[jdx] + "}";
-            }
-            out += tags;
-          }
-          out += "}\n\n";
-        }
-        return out;
-      };
-    })(exports);
-
-    /* end bibtexParse */
-  });
-
   // Copyright 2018 The Distill Template Authors
 
   function normalizeTag(string) {
@@ -1952,16 +1751,70 @@ d-appendix > distill-appendix {
 
   function parseBibtex(bibtex) {
     const bibliography = new Map();
-    const parsedEntries = bibtexParse.toJSON(bibtex);
-    for (const entry of parsedEntries) {
-      // normalize tags; note entryTags is an object, not Map
-      for (const [key, value] of Object.entries(entry.entryTags)) {
-        entry.entryTags[key.toLowerCase()] = normalizeTag(value);
-      }
-      entry.entryTags.type = entry.entryType;
-      // add to bibliography
-      bibliography.set(entry.citationKey, entry.entryTags);
+
+    // Check if the library is loaded correctly on the window object
+    // Use bracket notation because of the hyphen in 'bibtex-parse'
+    if (typeof window['bibtex-parse'] === 'undefined' || typeof window['bibtex-parse'].entries !== 'function') {
+      console.error("The bibtex-parse library (from the UMD script) was not found or is missing the 'entries' function. Ensure it's loaded *before* template.v2.js.");
+      return bibliography; // Return empty map
     }
+
+    if (!bibtex || typeof bibtex !== 'string' || bibtex.trim() === '') {
+      // console.warn("parseBibtex received empty or invalid input:", bibtex);
+      return bibliography; // Return empty map if input is bad or empty
+    }
+
+    try {
+      // *** Use the global object with bracket notation and call its 'entries' method ***
+      const parsedEntries = window['bibtex-parse'].entries(bibtex);
+
+      // console.log("[parseBibtex] Raw parsed entries:", parsedEntries); // For debugging
+
+      for (const entry of parsedEntries) {
+        // The structure from *this specific parser version* looks like:
+        // { key: 'citationKey', type: 'article', AUTHOR: '...', TITLE: '...', ... }
+        // Note the uppercase field names directly on the entry object.
+
+        const citationKey = entry.key;
+        if (!citationKey) {
+          console.warn("[parseBibtex] Parsed BibTeX entry missing citation key:", entry);
+          continue; // Skip entries without a key
+        }
+
+        const entryData = {};
+
+        // 1. Add the type (lowercase)
+        entryData.type = entry.type ? entry.type.toLowerCase() : 'misc';
+
+        // 2. Iterate over all properties of the parsed entry object
+        for (const fieldKey in entry) {
+          // Skip 'key' and 'type' as we handled them already, and internal properties
+          if (entry.hasOwnProperty(fieldKey) && fieldKey !== 'key' && fieldKey !== 'type') {
+            const fieldValue = entry[fieldKey];
+            // Convert the original BibTeX field key (like AUTHOR) to lowercase (like author)
+            const lowerCaseKey = fieldKey.toLowerCase();
+            // Normalize the value if it's a string
+            const normalizedValue = typeof fieldValue === 'string' ? normalizeTag(fieldValue) : fieldValue;
+            entryData[lowerCaseKey] = normalizedValue;
+          }
+        }
+
+        // Add the processed entry (with lowercase keys) to the bibliography Map
+        bibliography.set(citationKey, entryData);
+      }
+    } catch (error) {
+      // Catch parsing errors specifically
+      if (error && error.name === 'SyntaxError' && typeof error.format === 'function') {
+        // PEG.js SyntaxError provides detailed location info
+        console.error(`[parseBibtex] BibTeX Syntax Error: ${error.message} at line ${error.location.start.line}, column ${error.location.start.column}`);
+      } else {
+        // Other potential errors
+        console.error("[parseBibtex] Error processing BibTeX content:", error);
+      }
+      console.error("[parseBibtex] BibTeX content that failed parsing:\n---\n", bibtex, "\n---");
+    }
+
+    // console.log("[parseBibtex] Final bibliography Map:", bibliography); // For debugging
     return bibliography;
   }
 
@@ -1985,6 +1838,7 @@ d-appendix > distill-appendix {
 
     constructor() {
       super();
+      this.bibtex = null; // Initialize bibtex state
 
       // set up mutation observer
       const options = {
@@ -1994,8 +1848,18 @@ d-appendix > distill-appendix {
       };
       const observer = new MutationObserver((entries) => {
         for (const entry of entries) {
-          if (entry.target.nodeName === "SCRIPT" || entry.type === "characterData") {
+          // More robust check for script changes
+          let target = entry.target;
+          if (target.nodeType === Node.TEXT_NODE) {
+            target = target.parentElement;
+          }
+          if (target && target.nodeName === "SCRIPT" && (target.type === "text/bibtex" || target.type === "text/json")) {
             this.parseIfPossible();
+            break; // Only parse once
+          } else if (entry.type === "characterData" && entry.target.parentElement && entry.target.parentElement.nodeName === 'SCRIPT') {
+            // Handle direct text changes within the script tag
+            this.parseIfPossible();
+            break; // Only parse once
           }
         }
       });
@@ -2003,53 +1867,108 @@ d-appendix > distill-appendix {
     }
 
     connectedCallback() {
+      // Use requestAnimationFrame to ensure the DOM is ready, especially if using 'src'
       requestAnimationFrame(() => {
-        this.parseIfPossible();
+        // If src attribute is present, attributeChangedCallback will handle it.
+        // Otherwise, parse inline content.
+        if (!this.hasAttribute('src')) {
+          this.parseIfPossible();
+        }
       });
     }
 
+
     parseIfPossible() {
       const scriptTag = this.querySelector("script");
-      if (!scriptTag) return;
-      if (scriptTag.type == "text/bibtex") {
+      if (!scriptTag) {
+        // console.log("d-bibliography: No script tag found to parse.");
+        return;
+      }
+
+      if (scriptTag.type === "text/bibtex") {
         const newBibtex = scriptTag.textContent;
+        // Only parse if the content has actually changed or hasn't been parsed yet
         if (this.bibtex !== newBibtex) {
-          this.bibtex = newBibtex;
-          const bibliography = parseBibtex(this.bibtex);
-          this.notify(bibliography);
+          // console.log("d-bibliography: Parsing BibTeX content...");
+          this.bibtex = newBibtex; // Store the parsed content
+          const bibliography = parseBibtex(this.bibtex); // <<< USES CORRECTED FUNCTION
+          // console.log("d-bibliography: Parsed BibTeX, got Map:", bibliography);
+          if (bibliography instanceof Map) { // Ensure it's a Map before notifying
+            this.notify(bibliography);
+          } else {
+            console.error("d-bibliography: parseBibtex did not return a Map.");
+          }
         }
-      } else if (scriptTag.type == "text/json") {
-        const bibliography = new Map(JSON.parse(scriptTag.textContent));
-        this.notify(bibliography);
+      } else if (scriptTag.type === "text/json") {
+        // Similar check for JSON could be added if needed
+        try {
+          const newJson = scriptTag.textContent;
+          // Basic check if JSON content changes (can be improved)
+          if (this.jsonContent !== newJson) {
+            this.jsonContent = newJson;
+            // console.log("d-bibliography: Parsing JSON content...");
+            const bibliography = new Map(JSON.parse(newJson));
+            // console.log("d-bibliography: Parsed JSON, got Map:", bibliography);
+            this.notify(bibliography);
+          }
+        } catch (e) {
+          console.error("d-bibliography: Failed to parse JSON bibliography:", e);
+        }
       } else {
-        console.warn("Unsupported bibliography script tag type: " + scriptTag.type);
+        console.warn("d-bibliography: Unsupported script tag type: " + scriptTag.type);
       }
     }
 
     notify(bibliography) {
+      if (!(bibliography instanceof Map)) {
+        console.error("d-bibliography: Attempted to notify with non-Map data:", bibliography);
+        return;
+      }
+      // console.log("d-bibliography: Notifying with bibliography Map:", bibliography);
       const options = { detail: bibliography, bubbles: true };
       const event = new CustomEvent("onBibliographyChanged", options);
+      // Dispatch from the component itself, document listeners will catch it due to bubbles: true
       this.dispatchEvent(event);
     }
 
-    /* observe 'src' attribute */
 
+    /* observe 'src' attribute */
     static get observedAttributes() {
       return ["src"];
     }
 
     receivedBibtex(event) {
-      const bibliography = parseBibtex(event.target.response);
-      this.notify(bibliography);
+      if (event.target.status >= 200 && event.target.status < 300) {
+        const bibtexContent = event.target.response;
+        this.bibtex = bibtexContent; // Update stored bibtex
+        // console.log("d-bibliography: Received BibTeX from src:", bibtexContent);
+        const bibliography = parseBibtex(bibtexContent); // <<< USES CORRECTED FUNCTION
+        // console.log("d-bibliography: Parsed BibTeX from src, got Map:", bibliography);
+        if (bibliography instanceof Map) { // Ensure it's a Map before notifying
+          this.notify(bibliography);
+        } else {
+          console.error("d-bibliography: parseBibtex from src did not return a Map.");
+        }
+      } else {
+        console.warn(`d-bibliography: Failed to load Bibtex from ${event.target.responseURL}. Status: ${event.target.status}`);
+        this.notify(new Map()); // Notify with empty map on failure
+      }
     }
 
+
     attributeChangedCallback(name, oldValue, newValue) {
-      var oReq = new XMLHttpRequest();
-      oReq.onload = (e) => this.receivedBibtex(e);
-      oReq.onerror = () => console.warn(`Could not load Bibtex! (tried ${newValue})`);
-      oReq.responseType = "text";
-      oReq.open("GET", newValue, true);
-      oReq.send();
+      if (name === "src" && oldValue !== newValue && newValue) {
+        // console.log(`d-bibliography: src attribute changed to ${newValue}. Fetching...`);
+        var oReq = new XMLHttpRequest();
+        oReq.onload = (e) => this.receivedBibtex(e);
+        oReq.onerror = () => {
+          console.warn(`d-bibliography: Could not load Bibtex! Network error when trying ${newValue}`);
+          this.notify(new Map()); // Notify with empty map on failure
+        };
+        oReq.responseType = "text";
+        oReq.open("GET", newValue, true);
+        oReq.send();
+      }
     }
   }
 
