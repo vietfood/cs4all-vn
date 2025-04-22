@@ -9,7 +9,7 @@ DEPLOY_BRANCH="gh-pages"
 
 USAGE_MSG="usage: deploy [-h|--help] [-u|--user] [-s|--src SRC_BRANCH] [-d|--deploy DEPLOY_BRANCH] [--verbose] [--no-push]"
 
-while [[ $# > 0 ]]; do
+while [ $# -gt 0 ]; do
     key="$1"
 
     case $key in
@@ -50,7 +50,7 @@ echo "Source branch: $SRC_BRANCH"
 echo "Deploy branch: $DEPLOY_BRANCH"
 
 read -r -p "Do you want to proceed? [y/N] " response
-if [[ ! $response =~ ^([yY][eE][sS]|[yY])+$ ]]
+if [ ! "$response" = "y" ] && [ ! "$response" = "Y" ]; then
 then
     echo "Aborting."
     [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1
