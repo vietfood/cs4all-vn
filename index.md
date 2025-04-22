@@ -13,7 +13,6 @@ giscus_comments: true
 previous_section: false 
 next_section: false
 
-bibliography: main.bib
 citation: false 
 
 # Add a table of contents to your post.
@@ -49,4 +48,32 @@ _styles: >
 
 ## Giới thiệu
 
-Xin chào mọi người, mình hiện tại là một sinh viên năm cuối của VNU-HCMUS (hay Trường Đại học Khoa học tự nhiên - ĐHQG HCM).
+Xin chào mọi người và chào mừng bạn đến với **cs4all-vn**! 👋 Mình là một sinh viên năm cuối tại VNU-HCMUS (Trường ĐH Khoa học Tự nhiên - ĐHQG HCM), và mình siêu hào hứng được chia sẻ hành trình khám phá thế giới Khoa học Máy tính (CS) cùng các bạn.
+
+Nhiều người nghĩ CS chỉ là code và thuật toán phức tạp đúng không? Ồ, nghĩ lại nhé! 😉 CS thực ra là cả một vũ trụ bao la những điều cực kỳ hay ho và thú vị đấy!
+
+* Bạn có tò mò làm sao máy tính có thể "học" và đưa ra dự đoán thông minh như con người không? (Đó là **Machine Learning / Deep Learning**!) 🧠
+* Hay làm thế nào mà những hình ảnh trong game, phim ảnh lại trông sống động và chân thực đến vậy? (Chào mừng đến với **Computer Graphics**!) ✨
+* Đã bao giờ bạn tự hỏi làm sao máy tính hiểu được những dòng code bạn viết bằng Python, Java hay C++? (Đó là nhờ các **Compiler** và lý thuyết **Programming Language** đấy!) 🤖
+* Và làm sao các ứng dụng như Google, Facebook có thể xử lý hàng tỷ yêu cầu cùng lúc từ khắp nơi trên thế giới? (Sức mạnh của **Distributed Systems** và **High-Performance Computing**!) 🚀
+
+Còn rất, rất nhiều điều tuyệt vời khác nữa!
+
+Mình để ý thấy ở Việt Nam hiện nay, có lẽ nhiều bạn đang dồn sức rất nhiều vào việc luyện thuật toán để thi đấu (giống như các kỳ thi Olympic Tin học) hoặc tập trung xây dựng các trang web, ứng dụng (Web development, Software Engineering nói chung). Điều đó **rất tuyệt vời** và cực kỳ quan trọng nhé! Những kỹ năng đó thực sự cần thiết và mở ra nhiều cơ hội. Tuy nhiên, đôi khi mình có cảm giác là vì ánh đèn sân khấu chiếu quá sáng vào những lĩnh vực đó, chúng ta có thể vô tình bỏ lỡ hoặc chưa dành đủ sự quan tâm cho những mảng kiến thức nền tảng khác cũng không kém phần hấp dẫn và quan trọng - những mảnh ghép đã tạo nên toàn bộ ngành Khoa học Máy tính mà chúng ta biết ngày nay. Có bao giờ bạn cảm thấy như vậy không?
+
+Và đó cũng chính là một lý do lớn thôi thúc mình xây dựng nên trang wiki này! Mình muốn "vén bức màn", giới thiệu đến các bạn bức tranh toàn cảnh hơn về CS. Thú thật là bản thân mình cũng mới chỉ tìm hiểu kỹ được một vài mảng như ML/DL, HPC và Graphics thôi. Nhưng mình có một ước mơ là xây dựng nơi này thành một thư viện mở, giống như VNOI Wiki nhưng rộng hơn về các chủ đề CS, để tất cả chúng ta – dù là học sinh, sinh viên, hay người đã đi làm – đều có thể dễ dàng tiếp cận kiến thức **bằng tiếng Việt**.
+
+Mình tin rằng kiến thức là để sẻ chia (như "One for All" vậy đó!), và hy vọng nơi này sẽ không chỉ giúp các bạn khám phá CS mà còn kết nối những người cùng đam mê, dần dần xây dựng một cộng đồng CS thật mạnh ở Việt Nam. 💪
+
+**Sẵn sàng khám phá chưa? Dưới đây là một vài điểm xuất phát:**
+
+* 🧠 **[Học Máy (Machine Learning)](./prml)**: Cùng "chiến" cuốn sách kinh điển PRML và khám phá thế giới AI. ✈️
+* ✨ **[Đồ họa Máy tính (Computer Graphics)](./)**: Tìm hiểu cách tạo ra hình ảnh và hiệu ứng mãn nhãn. 🚧
+* 🚀 **[Tính toán Hiệu năng cao (High-Performance Computing)](./)**: Bạn có thử nghĩ xem làm sao để chạy nhanh một thuật toán (ví dụ như nhân ma trận) nhanh chưa ? 🚧
+* 🧩 **[Trình biên dịch (Compilers)](./)**: Hé lộ cách code biến thành chương trình chạy được. 🚧
+
+... và còn nhiều chuyên mục khác sẽ sớm ra mắt! Hãy cùng nhau học hỏi và xây dựng trang wiki này nhé!
+
+> NOTE:
+> - 🚧: Dự định sẽ thực hiện.
+> - ✈️: Đang thực hiện.
