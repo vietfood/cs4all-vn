@@ -49,12 +49,14 @@ Mình tin rằng kiến thức là để sẻ chia (như "One for All" vậy đ�
 **Sẵn sàng khám phá chưa? Dưới đây là một vài điểm xuất phát:**
 
 * 🧠 **[Học Máy (Machine Learning)](./prml)**: Cùng "chiến" cuốn sách kinh điển PRML và khám phá thế giới AI. ✈️
-* ✨ **[Đồ họa Máy tính (Computer Graphics)](./)**: Tìm hiểu cách tạo ra hình ảnh và hiệu ứng mãn nhãn. 🚧
-* 🚀 **[Tính toán Hiệu năng cao (High-Performance Computing)](./)**: Bạn có thử nghĩ xem làm sao để chạy nhanh một thuật toán (ví dụ như nhân ma trận) nhanh chưa ? 🚧
+* 🚀 **[Tính toán Hiệu năng cao (High-Performance Computing)](./hpc)**: Bạn có thử nghĩ xem làm sao để chạy một thuật toán (ví dụ như nhân ma trận) nhanh chưa ? 🚧
+* ✨ **[Đồ họa Máy tính (Computer Graphics)]()**: Tìm hiểu cách tạo ra hình ảnh và hiệu ứng mãn nhãn. 🚧
 * 🧩 **[Trình biên dịch (Compilers)](./)**: Hé lộ cách code biến thành chương trình chạy được. 🚧
+* 📚 **[Thuật toán (Algorithms)](https://wiki.vnoi.info/)**: Một mảng cũng cực kì quan trọng mà mình nghĩ mọi người nếu muốn bắt đầu hay "làm" CS đều cũng nên master cả (mình cũng đang cố gắng) và VNOI Wiki là một trong những trang mà mình tin tưởng nhất. 😚
 
 ... và còn nhiều chuyên mục khác sẽ sớm ra mắt! Hãy cùng nhau học hỏi và xây dựng trang wiki này nhé!
 
 > NOTE:
 > - 🚧: Dự định sẽ thực hiện.
 > - ✈️: Đang thực hiện.
+> - 😚: Của một bên khác.
