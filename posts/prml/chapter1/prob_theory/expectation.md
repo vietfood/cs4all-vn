@@ -139,7 +139,7 @@ Xét hai biến ngẫu nhiên $x$ và $y$, ta định nghĩa **hiệp phương s
 
 $$
 \begin{aligned}
-\text{cov}[x, y] &= \mathbb{E}_{x, y} [\{x - \mathbb{E}[x])(y - \mathbb{E}[y]\}] \\
+\text{cov}[x, y] &= \mathbb{E}_{x, y} [(x - \mathbb{E}[x])(y - \mathbb{E}[y])] \\
 &= \mathbb{E}_{x, y}[xy] - \mathbb{E}[x]\mathbb{E}[y]
 \end{aligned}
 $$
@@ -157,15 +157,19 @@ $$
 \end{aligned}
 $$
 
-Do đó $\text{cov}[x, y] = 0$. Vậy nếu hai biến ngẫu nhiên $x$ và $y$ độc lập với nhau thì hiệp phương sai của $x$ và $y$ là $0$.
+Do đó $\text{cov}[x, y] = 0$. Vậy nếu hai biến ngẫu nhiên $x$ và $y$ độc lập với nhau thì hiệp phương sai của $x$ và $y$ là $0$. Tuy nhiên, ngược lại không đúng, tức là hiệp phương sai bằng $0$ thì không có nghĩa là $x$ và $y$ độc lập với nhau.
 
 Nếu ta xét hiệp phương sai giữa hai vector ngẫu nhiên $\mathbf{x} = (x_1, x_{2} \dots)$ và $\mathbf{y} = (y_{1}, y_{2}, \dots)$. Ta có:
 
 $$
 \begin{aligned}
-\text{cov}[\mathbf{x}, \mathbf{y}] &= \mathbb{E}[(\mathbf{x} - \mathbb{E}[\mathbf{x}])(\mathbf{y} - \mathbb{E}[\mathbf{y}])] \\
-&= \mathbb{E}_{\mathbf{x}, \mathbf{y}}[\mathbf{x}\mathbf{y}^T] + \mathbb{E}[\mathbf{x}]\mathbb{E}[\mathbf{y}^T]
+\text{cov}[\mathbf{x}, \mathbf{y}] &= \mathbb{E}[(\mathbf{x} - \mathbb{E}[\mathbf{x}])(\mathbf{y} - \mathbb{E}[\mathbf{y}])^T] \\
+&= \mathbb{E}_{\mathbf{x}, \mathbf{y}}[\mathbf{x}\mathbf{y}^T] - \mathbb{E}[\mathbf{x}]\mathbb{E}[\mathbf{y}^T]
 \end{aligned}
 $$
 
-Nếu ta xét hiệp phương sai giữa biến ngẫu nhiên $x$ với chính nó, ta có thể viết $\text{cov}[x]$ thay cho $\text{cov}[x, x]$. Tương tự với vector ngẫu nhiên $\mathbf{x}$, $\text{cov}[\mathbf{x}, \mathbf{x}] \equiv \text{cov}[\mathbf{x}]$.
+Nếu ta xét hiệp phương sai giữa biến ngẫu nhiên $x$ với chính nó, ta có thể viết $\text{cov}[x]$ thay cho $\text{cov}[x, x]$. Tương tự với vector ngẫu nhiên $\mathbf{x}$, $\text{cov}[\mathbf{x}, \mathbf{x}] \equiv \text{cov}[\mathbf{x}]$:
+
+$$
+\text{cov}[\mathbf{x}] = \mathbb{E}[(\mathbf{x} - \mathbb{E}[\mathbf{x}])(\mathbf{x} - \mathbb{E}[\mathbf{x}])^T] 
+$$

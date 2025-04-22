@@ -52,11 +52,11 @@ _styles: >
 
 Một hôm bạn An định mua bánh, đến chợ thì có hai bà bán bánh là bà Hoa và bà Lan. Bà Lan hiện đang còn 2 cái bánh mì và 6 cái bánh xèo, bà Hoa hiện đang còn 3 cái bánh mì và 1 cái bánh xèo.
 
-Như mọi hôm, An thích ăn bánh của bà Hoa làm hơn, do đó ở nhiều lần đi mua trước, hết 60% trên tổng số lần bạn An đã chọn bà Hoa. Giả sử, việc An chọn bánh nào cũng như nhau (không thích bánh nào hơn bánh nào, đói thì ăn).
+Như mọi hôm, An thích ăn bánh của bà Hoa làm hơn, do đó ở nhiều lần đi mua trước, hết 60% trên tổng số lần bạn An đã chọn bà Hoa. Giả sử, An chọn ngẫu nhiên một người bán bánh, sau đó An tiếp tục chọn bánh từ bán một cách ngẫu nhiên, bánh nào cũng như nhau (không thích bánh nào hơn bánh nào, đói thì ăn).
 
 Trước khi vào vấn đề, ta cần hiểu một chút định nghĩa sau:
 
-- Ta gọi tập hợp các khả năng có thể xảy ra của một **phép thử** (experiment) (ở ví dụ trên là đi mua bánh) là **không gian mẫu** (sample space) và kí hiệu là $\Omega$. Một **biến cố** (event) $A$ là một tập con của $\Omega$. Ta nói biến cố $A$ xảy ra nếu một kết quả trong $A$ xảy ra. Ví dụ, xét việc tung hai đồng xu, ta có $A = \lbrace HT, HH\rbarce$, nếu ta tung đồng xu thứ nhất được mặt ngửa ($H$) và đồng xu thứ 2 được mặt xấp ($T$) thì ta nói $A$ xảy ra.
+- Ta gọi tập hợp các khả năng có thể xảy ra của một **phép thử** (experiment) (ở ví dụ trên là đi mua bánh) là **không gian mẫu** (sample space) và kí hiệu là $\Omega$. Một **biến cố** (event) $A$ là một tập con của $\Omega$. Ta nói biến cố $A$ xảy ra nếu một kết quả trong $A$ xảy ra. Ví dụ, xét việc tung hai đồng xu, ta có $A = \lbrace HT, HH\rbrace$, nếu ta tung đồng xu thứ nhất được mặt ngửa ($H$) và đồng xu thứ 2 được mặt xấp ($T$) thì ta nói $A$ xảy ra.
 - Xác suất của một biến cố $A$ được kí hiệu là $p(A)$ và có giá trị từ $[0, 1]$. Ta có thể định nghĩa xác suất của $A$ là **số lần thử mà $A$ xảy ra chia tổng số lần thử**.
 - Một biến ngẫu nhiên $X$ hiểu đơn giản là một cách để đưa các biến cố sang các số thực (hay là một ánh xạ từ $\Omega$ sang $\R$). 
 - Ngoài ra, ta nói $X$ là biến ngẫu nhiên **rời rạc** nếu tập xác định của $X$ là tập hữu hạn (như ví dụ trên $\lbrace 0, 1, \dots, 50 \rbrace$) hay vô hạn đếm được (ví dụ $\lbrace 0, 1, \dots \rbrace$). Ngược lại, ta gọi $X$ là biến ngẫu nhiên **liên tục**.
@@ -100,7 +100,7 @@ Xét hai biến ngẫu nhiên $X$ và $Y$, trong đó $X$ có thể nhận các 
 
 <p class="takeaway">Dựa vào hình, nếu ta xem mỗi hai biến ngẫu nhiên $X$ và $Y$ tạo nên hộp có các ô như trên. Ta xem mỗi lần thử là một viên bi, cứ một lần thử, ta sẽ thả một viên bi vào hộp trên, vậy trong $N$ lần thử, ta sẽ có $N$ viên bi nằm ở các ô ngẫu nhiên trong hộp. Vậy xác suất để một lần thử có $X = x_i$ và $Y = y_j$ chính là tỉ lệ giữa số bi nằm trong ô $X = x_i$ và $Y = y_j$ (là $n_{ij}$) với tổng viên bi (là $N$).</p>
 
-<p mardown=1 class="takeaway">Ta đọc dấu $,$ trong công thức xác suất đồng thời là "và", tức là $p(X = x_i, Y = Y_j)$ sẽ đọc là "xác suất của $X = x_i$ và $Y = y_j$". Do là phép "và" nên có tính đối xứng, nghĩa là $p(X =x_i, Y = y_j) = p(Y = y_j, X = x_i)$. Hiểu một cách khác thì ô $i, j$ hay ô $j, i$ đều như nhau nên số viên bi tại đó là bằng nhau.</p>
+<p markdown=1 class="takeaway">Ta đọc dấu $,$ trong công thức xác suất đồng thời là "và", tức là $p(X = x_i, Y = y_j)$ sẽ đọc là "xác suất của $X = x_i$ và $Y = y_j$". Do là phép "và" nên có tính đối xứng, nghĩa là $p(X =x_i, Y = y_j) = p(Y = y_j, X = x_i)$. Hiểu một cách khác thì ô $i, j$ hay ô $j, i$ đều như nhau nên số viên bi tại đó là bằng nhau.</p>
 
 Ta gọi xác suất mà $X = x_i$ và $Y = y_j$ cùng xảy ra là **xác suất đồng thời** của $X = x_i$ và $Y = y_j$, kí hiệu là $p(X = x_i, Y = y_j)$.  Như đã nói ở trên, $p(X = x_i, Y = y_j)$ chính là số lần thử mà $X = x_i$ và $Y = y_j$ xảy ra ($n_{ij}$) chia cho tổng số lần thử ($N$). Xác suất này được tính như sau:
 
@@ -122,16 +122,16 @@ $$
 
 có thể thấy, tổng của xác suất là bằng $1$.
 
-<p class="takeaway">Việc $\sum_{i} c_{i} = N$ là bởi vì khi ta thả bi vào hộp, bi chắc chắn phải nằm ít nhất một trong các giá trị $x_i$ với $i = 1, \dots, L$. Ta không cần quan tâm tới $Y$ nhé, cứ tưởng tượng hộp của chúng ta không có các ô ngang nữa (bỏ đi $Y$) chỉ có các ô dọc của $X$ (chỉ có các giá trị $c_i$) khi đó tổng các ô dọc lại, ta sẽ có được cả hộp (tức là sẽ có được tổng số bi). Tương tự với $Y$, ta bỏ đi $X$ (ô dọc), hộp chỉ còn các ô ngang, do đó $\sum_{j} r_{j} = N$.</p>
+<p class="takeaway">Việc $\sum_{i} c_{i} = N$ là bởi vì khi ta thả bi vào hộp, bi chắc chắn phải nằm ít nhất một trong các giá trị $x_i$ với $i = 1, \dots, M$. Ta không cần quan tâm tới $Y$ nhé, cứ tưởng tượng hộp của chúng ta không có các ô ngang nữa (bỏ đi $Y$) chỉ có các ô dọc của $X$ (chỉ có các giá trị $c_i$) khi đó tổng các ô dọc lại, ta sẽ có được cả hộp (tức là sẽ có được tổng số bi). Tương tự với $Y$, ta bỏ đi $X$ (ô dọc), hộp chỉ còn các ô ngang, do đó $\sum_{j} r_{j} = N$.</p>
 
 Hơn nữa, ta thấy $c_i$ chính là tổng của các ô có $X = x_i$ và $Y = y_j$ với $j$ tuỳ ý (tức là tổng từng ô nhỏ tạo thành hàng dọc tại vị trí $X = x_j$):
 
 $$
 \begin{align}
-c_{i} &= \sum_{j=1}^M n_{ij} \\
-\implies p(X = x_{i}) &=  \frac{\sum_{j=1}^M n_{ij}}{N} \\
-&= \sum_{j=1}^M \frac{n_{ij}}{N} \\
-&= \sum_{j=1}^M p(X = x_{i}, Y = y_{j})
+c_{i} &= \sum_{j=1}^L n_{ij} \\
+\implies p(X = x_{i}) &=  \frac{\sum_{j=1}^L n_{ij}}{N} \\
+&= \sum_{j=1}^L \frac{n_{ij}}{N} \\
+&= \sum_{j=1}^L p(X = x_{i}, Y = y_{j})
 \end{align}
 $$
 
@@ -146,7 +146,7 @@ $$
 Ta lại có $\sum_{j} n_{ij} = c_{i}$ (cách này giải thích giống như $\sum_{i} c_{i} = N$ ở phía trên) do đó:
 
 $$
-\sum_{j = 1}^M p(Y = y_{j} \mid X = x_{i}) = \sum_{j=1}^M \frac{n_{ij}}{c_{i}} = 1
+\sum_{j = 1}^L p(Y = y_{j} \mid X = x_{i}) = \sum_{j=1}^L \frac{n_{ij}}{c_{i}} = 1
 $$
 
 Từ công thức của xác suất có điều kiện, ta thấy:

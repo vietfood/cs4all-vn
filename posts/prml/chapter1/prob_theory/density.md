@@ -91,9 +91,9 @@ Tương tự như biến ngẫu nhiên rời rạc, sum rule, product rule và �
 $$
 \begin{aligned}
 p(x) &= \int p(x, y) dy \\
-p(x, y) &= p(y \mid x) p(x) \\
-\implies p(x,y) &= \int p(y \mid x) p(x) dy \\
-&= \int p(x \mid y) p(y) dy
+\text{but} \hspace{3pt} p(x, y) &= p(y \mid x) p(x) \\
+\implies p(x) &= \int p(y \mid x) p(x) dy \\
+\implies p(y) &= \int p(x, y)dx \int p(y \mid x) p(x) dx
 \end{aligned}
 $$
 

@@ -25,7 +25,9 @@ Trước khi quyết định đưa cái này lên mạng thì mình đã đượ
 
 {% include figure.liquid path="assets/img/prml/permission.png" class="img-fluid" %}
 
-Ngoài ra, icon 🚧 nghĩa là đang viết, 💀 nghĩa là chưa viết và ✅ nghĩa là xong rồi hoặc là xong 1 phần 😗. Lưu ý nữa là, đây là note theo ý mình, thế nên có thể sai, các bạn nên sử dụng với mục đích tham khảo thêm 🥰.
+Icon 🚧 nghĩa là đang viết, 💀 nghĩa là chưa viết và ✅ nghĩa là xong rồi hoặc là xong 1 phần 😗. Lưu ý nữa là, đây là note theo ý mình, thế nên có thể sai, các bạn nên sử dụng với mục đích tham khảo thêm 🥰.
+
+<p markdown=1 class="takeaway">Ngoài ra, còn một nguồn mà mình có thể gọi là cửu âm chân kinh của mọi người nếu học về Machine Learning đó chính là [Machine Learning cơ bản](https://machinelearningcoban.com/) của anh Vũ Hữu Tiệp.</p>
 
 ## 1. Introduction
 
