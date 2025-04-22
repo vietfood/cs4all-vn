@@ -4,6 +4,8 @@
 <head>
   {% include head.liquid %}
 
+  <script src="https://cdn.jsdelivr.net/npm/bibtex-parse@2.1.0/bibtex-parse.js"></script>
+
   <!-- Distill js -->
   <script src="{{ '/assets/js/distillpub/template.v2.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/distillpub/transforms.v2.js' | relative_url }}"></script>
@@ -71,8 +73,8 @@
         <p>
         <span class="subtitle">{{ page.subtitle }}</span> 
         {% if page.previous_section and page.next_section %}
-        <span class="subtitle-links">({{ page.previous_section_name
-            }} | <a href="{{ page.next_section_url }}">{{ page.next_section_name }}</a>)</span>
+          <span class="subtitle-links">(<a href="{{ page.previous_section_url}}">{{ page.previous_section_name
+              }}</a> | <a href="{{ page.next_section_url }}">{{ page.next_section_name }}</a>)</span>
         {% endif %}
         </p>
       {% else %}
