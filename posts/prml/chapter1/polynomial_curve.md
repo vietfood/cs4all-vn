@@ -11,9 +11,9 @@ giscus_comments: true
 
 previous_section: true
 next_section: true
-previous_section_url: "../../"
+previous_section_url: "/cs4all-vn/prml/"
 previous_section_name: "Trang chính"
-next_section_url: "../prob_theory"
+next_section_url: "/cs4all-vn/prml/chapter1/prob_theory"
 next_section_name: "Probability Theory"
 
 authors:

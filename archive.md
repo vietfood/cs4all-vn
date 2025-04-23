@@ -17,4 +17,5 @@ toc:
 - 1.2 **[Probability Theory](./prml/chapter1/prob_theory)**
     - 1.2.1 [Probability Densities](./prml/chapter1/prob_theory/density)
     - 1.2.2 [Expectations and Covariances](./prml/chapter1/prob_theory/expectation)
+    - 1.2.3 [Bayesian Probabilities](./prml/chapter1/prob_theory/bayes)
 - **[Exercises (Part I)](./prml/chapter1/exercises_1)**

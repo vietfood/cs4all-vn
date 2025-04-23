@@ -15,9 +15,9 @@ bibliography: main.bib
 
 previous_section: true
 next_section: true
-previous_section_url: "../polynomial_curve"
+previous_section_url: "/cs4all-vn/prml/chapter1/polynomial_curve"
 previous_section_name: "Polynomial Curve"
-next_section_url: "../prob_theory/density"
+next_section_url: "/cs4all-vn/prml/chapter1/prob_theory/density"
 next_section_name: "Probability Densities"
 
 authors:

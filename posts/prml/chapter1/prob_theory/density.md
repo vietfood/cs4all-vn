@@ -16,9 +16,9 @@ bibliography: main.bib
 previous_section: true
 next_section: true
 
-previous_section_url: "../prob_theory/"
+previous_section_url: "/cs4all-vn/prml/chapter1/prob_theory/"
 previous_section_name: "Probability Theory"
-next_section_url: "../prob_theory/expectation"
+next_section_url: "/cs4all-vn/prml/chapter1/prob_theory/expectation"
 next_section_name: "Expectations and Covariances"
 
 authors:

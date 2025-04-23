@@ -109,22 +109,22 @@ Ta có:
 
 $$
 \begin{aligned}
-\frac{\partial{E(\hat{\mathbf{w}})}}{\partial w_{i}} &= \frac{1}{2} \sum_{n=1}^N \frac{\partial \left( \{y(x_{n}, \mathbf{w}) - t_{n}\}^2 +\frac{\lambda}{2}||\mathbf{w}||^2 \right)}{\partial w_{i}} \\
-&= \frac{1}{2} \sum_{n=1}^N \left[ \frac{\partial y(x_{n}, \mathbf{w})^2}{\partial w_{i}} - 2t_{n} \frac{\partial y(x_{n}, \mathbf{w})}{\partial w_{i}} + \frac{\partial t_{n}^2}{\partial w_{i}} + \frac{\lambda}{2} \frac{\partial||\mathbf{w}||^2}{\partial w_{i}} \right] \\
-&= \sum_{j=0}^M A_{ij}w_{j} -T_{i} + \sum_{n=1}^N \lambda w_{i} \\
-&= \sum_{j=0}^M A_{ij}w_{j} -T_{i} + N\lambda w_{i} \\
+\frac{\partial{E(\hat{\mathbf{w}})}}{\partial w_{i}} &= \frac{1}{2} \sum_{n=1}^N \frac{\partial \left( \{y(x_{n}, \mathbf{w}) - t_{n}\}^2 \right)}{\partial w_{i}} + \frac{\lambda}{2}\dfrac{\partial ||\mathbf{w}||^2}{\partial w_{i}} \\
+&= \frac{1}{2} \sum_{n=1}^N \left[ \frac{\partial y(x_{n}, \mathbf{w})^2}{\partial w_{i}} - 2t_{n} \frac{\partial y(x_{n}, \mathbf{w})}{\partial w_{i}} + \frac{\partial t_{n}^2}{\partial w_{i}} \right] + \frac{\lambda}{2} \frac{\partial||\mathbf{w}||^2}{\partial w_{i}} \\
+&= \sum_{j=0}^M A_{ij}w_{j} -T_{i} + \lambda w_{i} \\
+&= \sum_{j=0}^M A_{ij}w_{j} -T_{i} + \lambda w_{i} \\
 \end{aligned}
 $$
 
 Vậy giá trị $\hat{w}_i$ chính là nghiệm của phương trình:
 
 $$
-\sum_{j=0}^M A_{ij}w_{j} + N\lambda w_{i} = T_{i}
+\sum_{j=0}^M A_{ij}w_{j} + \lambda w_{i} = T_{i}
 $$
 
 ## Bài 1-3
 
-Bài này giải khá tương tự bài trong phần [[Introduction (Prob)]]. Mình đặt biến ngẫu nhiên $B$ đại diện cho các hộp màu, biến ngẫu nhiên $F$ đại diện cho trái cây, $F= a$ là trái táo (apple), $F = o$ là trái cam (orange) và $F = l$ là trái chanh (lime). Ta có:
+Bài này giải khá tương tự bài trong phần [Probability Theory](/cs4all-vn/prml/chapter1/prob_theory/). Mình đặt biến ngẫu nhiên $B$ đại diện cho các hộp màu, biến ngẫu nhiên $F$ đại diện cho trái cây, $F= a$ là trái táo (apple), $F = o$ là trái cam (orange) và $F = l$ là trái chanh (lime). Ta có:
 
 $$
 \begin{aligned}
@@ -207,7 +207,7 @@ p_{y}'(y) = \frac{dp_{y}(y)}{dy} &= \frac{dp_{x}(g(y))}{dy} sg'(y) + p_{x}(g(y))
 \end{aligned}
 $$
 
-Giả sử giá trị $\hat{y}$ là giá trị để làm cho $p_y$ lớn nhất và **giả sử** $\hat{x} = g(\hat{y})$, tức là $p_x(\hat{x}) = p_x(g(\hat{y})) = 0$ (tương tự như $x$ và $y$ không là biến ngẫu nhiên). Khi đó:
+Giả sử giá trị $\hat{y}$ là giá trị để làm cho $p_y$ lớn nhất và **giả sử** $\hat{x} = g(\hat{y})$, tức là $p'_x(\hat{x}) = p'_x(g(\hat{y})) = 0$ (tương tự như $x$ và $y$ không là biến ngẫu nhiên). Khi đó:
 
 $$
 \begin{aligned}

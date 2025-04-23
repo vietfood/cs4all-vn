@@ -16,8 +16,10 @@ bibliography: main.bib
 previous_section: true
 next_section: true
 
-previous_section_url: "../prob_theory/density"
+previous_section_url: "/cs4all-vn/prml/chapter1/prob_theory/density"
 previous_section_name: "Probability Densities"
+next_section_url: "/cs4all-vn/prml/chapter1/prob_theory/bayes"
+next_section_name: "Bayesian Probabilities"
 
 authors:
   - name: Lê Nguyễn
