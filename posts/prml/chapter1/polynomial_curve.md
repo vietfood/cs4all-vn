@@ -1,6 +1,6 @@
 ---
 layout: distill
-permalink: /prml/chapter1/polynomial_curve/
+permalink: /prml/chapter1/polynomial_curve
 title: "Polynomial Curve Fitting"
 subtitle: "PRML Chapter 1.1"
 date: 2025-04-22
