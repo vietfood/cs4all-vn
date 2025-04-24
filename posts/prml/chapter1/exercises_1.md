@@ -9,6 +9,12 @@ htmlwidgets: true
 hidden: false
 giscus_comments: true
 
+next_section: true
+previous_section: true
+
+next_section_url: "/cs4all-vn/prml/chapter1/exercises_2"
+next_section_name: "Exercises (Part II)"
+
 authors:
   - name: Lê Nguyễn
     url: "https://lenguyen.vercel.app"
@@ -21,6 +27,7 @@ toc:
   - name: Bài 1-5
   - name: Bài 1-7
   - name: Bài 1-8
+  - name: Bài 1-9
 ---
 
 ## Bài 1-1
@@ -471,5 +478,110 @@ $$
 \text{var}[X] &= \mathbb{E}[X^2] - \mathbb{E}[X]^2 \\
 \implies \mathbb{E}[X^2] &= var[X] + \mathbb{E}[X]^2 \\
 &= \sigma^2 + \mu^2
+\end{align*}
+$$
+
+## Bài 1-9
+
+Như đã chứng minh ở bài 1.4, khi mà ta đổi biến ngẫu nhiên $X$ có phân phối xác suất $f_{X}$ sang biến ngẫu nhiên $Y$ với $X = g(Y)$ và $g$ là hàm tuyến tính thì ta có thể tìm giá trị lớn nhất của $f_{X}$ thông qua $f_{Y}$. Ngoài ra ta có thể tìm $f_{Y}$ thông qua công thức sau:
+
+$$
+f_{Y}(y) = f_{X}(g(y)) |g'(y)|
+$$
+
+Đặt $g(Y) = \sigma Y + \mu$ và $X \sim \mathcal{N}(\mu, \sigma^2)$, nên ta có:
+
+$$
+\begin{align*}
+f_{X}(g(y)) &= \frac{1}{(2\pi\sigma^2)^{1/2}} \exp\left( -\frac{1}{2\sigma^2}[(\sigma y + \mu) - \mu]^2 \right) \\
+&= \frac{1}{(2\pi \sigma^2)^{1/2}} \exp\left( -\frac{1}{2}y^2 \right) \\
+\text{và} \hspace{5pt} g'(y) &= \sigma
+\end{align*}
+$$
+
+do đó:
+
+$$
+\begin{align*}
+f_{Y}(y) &= \frac{1}{(2\pi \sigma^2)^{1/2}} \exp\left( -\frac{1}{2}y \right) |\sigma| \\
+&= \frac{1}{(2\pi \sigma^2)^{1/2}} \exp\left( -\frac{1}{2}y^2 \right) \sigma \\
+&= \frac{1}{(2\pi)^{1/2}} \exp\left( -\frac{1}{2}y^2 \right)
+\end{align*}
+$$
+
+Lấy đạo hàm bằng $0$, ta có:
+
+$$
+\begin{align*}
+f_{Y}'(y) &=\frac{1}{(2\pi)^{1/2}} (-y) \exp\left( -\frac{1}{2}y^2 \right) \\
+\implies f'_{Y}(y) &= 0  \\
+\Leftrightarrow y &= 0 \\
+\implies x &= \mu
+\end{align*}
+$$
+
+Để xác minh giá trị đạo hàm bằng $0$ là cực đại, ta có:
+
+$$
+\begin{align*}
+f''_{Y}(y) &= \frac{1}{(2\pi)^{1/2}} \left[ -\exp\left( -\frac{1}{2}y^2 \right) + y^2 \exp\left( -\frac{1}{2}y^2 \right)  \right] \\
+&= \frac{1}{(2\pi)^{1/2}} \exp\left( -\frac{1}{2}y^2 \right) (y^2 - 1)
+\end{align*}
+$$
+
+tại $y = 0$, $f_{Y}"(y) < 0$ do đó $y = 0$ là điểm làm cho $f_{Y}(y)$ cực đại.
+
+Vậy giá trị  $x$ làm cho phân phối $f_{X}$ lớn nhất là $x = \mu$. Do đó $\mu$ chính là **mode** của phân phối chuẩn.
+
+## Bài 1-10
+
+Khi hai biến ngẫu nhiên $X$ và $Z$ độc lập với nhau thì $p(x, z) = p_{x}(x)p_{z}(z)$ với $p(x, z)$ là mật độ xác suất đồng thời của $X$ và $Z$, còn $p_{x}$ và $p_{z}$ lần lượt là mật độ xác suất của $X$ và $Z$.
+
+Ta có:
+
+$$
+\begin{align*}
+\mathbb{E}[X + Z] &= \iint (x + z)p(x, z)dxdz \\
+&= \iint (x+z)p_{x}(x)p_{z}(z)dxdz \\
+&= \iint xp_{x}(x)p_{z}(z)dxdz + \iint zp_{x}(x)p_{z}(z)dxdz \\
+&= \int p_{z}(z)\left[ \int xp_{x}(x)dx \right]dz + \int p_{x}(x)\left[ \int zp_{z}(z)dz \right]dx \\
+&= \mathbb{E}[X] \int p_{z}(z)dz + \mathbb{E}[Z] \int p_{x}(x)dx \\
+&= \mathbb{E}[X] + \mathbb{E}[Z]
+\end{align*}
+$$
+
+<p class="takeaway" markdown=1>
+Do $p_{x}$ là một hàm mật độ xác suất nên:
+\\[
+\int_{-\infty}^{\infty} p_{x}(x) dx = 1
+\\]
+tương tự với $p_{z}$.
+</p>
+
+Ta có:
+
+$$
+\text{var}[X + Z] = \mathbb{E}[(X+Z)^2] - (\mathbb{E}[X+Z])^2 \\
+$$
+
+Bây giờ, ta sẽ phân tích $\mathbb{E}[(X +Z)^2]$ thử:
+
+$$
+\begin{align*}
+&\mathbb{E}[(X+Z)^2] = \iint (x+z)^2 p(x, z)dxdz \\
+&= \iint (x^2 + 2xz + z^2) p(x, z)dxdz \\
+&= \iint x^2p_{x}(x)p_{z}(z)dxdz + 2\iint xzp_{x}(x)p_{z}(z)dxdz + \iint z^2p_{x}(x)p_{z}(z)dxdz \\
+&= \int p_{z}(z) \left[ \int x^2 p_{x}(x)dx \right]dz + \int p_{x}(x) \left[ \int z^2 p_{z}(z)dz \right]dx + 2\int xp_{x}(x)dx \int zp_{z}(z)dz \\
+&= \mathbb{E}[X^2] + \mathbb{E}[Z^2] + 2\mathbb{E}[X] \mathbb{E}[Z]
+\end{align*}
+$$
+
+Thay vào phương trình $\text{var}[X + Z]$, ta có:
+
+$$
+\begin{align*}
+\text{var}[X + Z] &= \mathbb{E}[X^2] + \mathbb{E}[Z^2] + 2\mathbb{E}[X]\mathbb{E}[Z] - (\mathbb{E}[X] + \mathbb{E}[Z])^2 \\
+&= (\mathbb{E}[X^2] - \mathbb{E}[X]^2) + (\mathbb{E}[Z^2] - \mathbb{E}[Z]^2) \\
+&= \text{var}[X] + \text{var}[Z]
 \end{align*}
 $$
