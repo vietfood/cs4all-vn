@@ -1,53 +1,38 @@
-# How To Scale Your Model
+# cs4all-vn: Computer Science for Everyone (in Vietnamese) 🇻🇳
 
-This book aims to demystify the art of scaling LLMs on TPUs. We try to explain how TPUs work, how LLMs actually run at scale, and how to pick parallelism schemes during training and inference that avoid communication bottlenecks. The book is available at https://jax-ml.github.io/scaling-book.
+[Đọc tiếng việt tại đây](README_VI.md)
 
-### Acknowledgments
+## Introduction
 
-This book was written by Jacob Austin, Sholto Douglas, Roy Frostig, Anselm Levskaya, Charlie Chen, Sharad Vikram, Federico Lebron, Peter Choy, Vinay Ramasesh and Albert Webson at Google DeepMind. Many of the ideas were first derived by James Bradbury and Reiner Pope.
+Welcome to the repository for **cs4all-vn**, a community-driven project aiming to become a comprehensive, friendly, and accessible Computer Science wiki for Vietnamese students and learners everywhere!
 
-The website uses a Distill-style Jekyll theme created by https://github.com/alshedivat/al-folio and the Distill team. Thank you!
+**[Visit the Live Wiki Here!](https://lenguyen1807.github.io/cs4all-vn/)** 
 
-### Running Locally
+## Current Status
 
-To build this repo locally, run
+This project is currently **under active development**. We are laying the foundations and starting content creation (beginning with Machine Learning based on Pattern Recognition and Machine Learning book by Christopher Bishop). We warmly welcome contributors!
 
-```
-git clone https://github.com/jax-ml/scaling-book.git
-cd scaling-book
-bundle install
-bundle exec jekyll serve
-```
+## How to Contribute
 
-To run on Mac OS, you may need to run some of the following as well: `brew install imagemagick`, `pip install jupyter`, `brew install ruby`, or `git config safe.bareRepository all`, depending on what errors you hit. Once you have run jekyll serve successfully, the book will be available at `localhost:4000/scaling-book`.
+We believe knowledge is best built together! You don't need to be an expert to contribute. Just do it and I'm really happy that I'm not alone anymore ✌️.
 
-To deploy to the GitHub Pages site (with repo write permision), run `sh bin/deploy`, which will take about 3 minutes to run.
+## Acknowledgments
 
-### Contributing and Contact
+This project, both in its structure and spirit, draws heavily from and is inspired by the **["How To Scale Your Model"](https://jax-ml.github.io/scaling-book)** project by the team at Google DeepMind.
 
-If you see any issues or have questions, please leave a comment on the website itself (powered by Giscus) or in the GitHub discussion. Feel free to send a PR if you want to contribute. You can also email jaaustin [at] google [dot] com.
+* We extend our sincere gratitude to Jacob Austin, Sholto Douglas, Roy Frostig, Anselm Levskaya, Charlie Chen, Sharad Vikram, Federico Lebron, Peter Choy, Vinay Ramasesh, Albert Webson, James Bradbury, Reiner Pope, and everyone involved in creating such an insightful resource available at [github.com/jax-ml/scaling-book](https://github.com/jax-ml/scaling-book).
+* The website utilizes a Distill-style Jekyll theme originally created by **[al-folio](https://github.com/alshedivat/al-folio)** and the **Distill team**, which provides the clean and readable format for this wiki. Thank you!
 
-To contribute on GitHub you will need to sign a Google "Contributor License Agreement" (CLA). You can do that here: https://cla.developers.google.com/clas.
+We highly recommend checking out their work, especially if you are interested in scaling large models on TPUs. For academic citation of their work, please refer to the [citation information in their repository](https://github.com/jax-ml/scaling-book?tab=readme-ov-file#citation).
 
-### Citation
+## License
 
-For attribution in academic contexts, please cite this work as
+The content (text, articles) of this wiki is licensed under **[Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](LICENSE-CONTENT)**.
 
-```Austin et al., "How to Scale Your Model", Google DeepMind, online, 2025.```
+The underlying code used to format and display the content use the same license as [original repo](github.com/jax-ml/scaling-book) (MIT License).
 
-BibTeX citation
+## Contact
 
-```
-@article{scaling-book,
-  title = {How to Scale Your Model},
-  author = {Austin, Jacob and Douglas, Sholto and Frostig, Roy and Levskaya, Anselm and Chen, Charlie and Vikram, Sharad and Lebron, Federico and Choy, Peter and Ramasesh, Vinay and Webson, Albert and Pope, Reiner},
-  publisher = {Google DeepMind},
-  howpublished = {Online},
-  note = {Retrieved from https://jax-ml.github.io/scaling-book/},
-  year = {2025}
-}
-```
+Currently maintained by: **[lenguyen18072003](https://github.com/lenguyen18072003)**.
 
-![dragon](assets/img/dragon.png)
-
-*This book was originally called "How To Scale Your Dragon", after the Dreamworks film, hence the dragon imagery.*
+Feel free to open an Issue for any questions or discussions!
