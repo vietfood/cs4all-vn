@@ -22,7 +22,13 @@ previous_section_name: "Bayesian Probabilities"
 authors:
   - name: Lê Nguyễn
     url: "https://lenguyen.vercel.app"
+
+toc:
+  - name: Lý thuyết
+  - name: Chứng minh trung bình và phương sai mẫu
 ---
+
+## Lý thuyết
 
 <p markdown=1 class="definition">
 **Phân phối chuẩn** (Gaussian Distribution hoặc Normal Distribution), kí hiệu là $\mathcal{N}(x \mid \mu, \sigma^2)$, sẽ được định nghĩa như sau:
@@ -65,7 +71,7 @@ $$
 $$
 
 <p markdown=1 class="takeaway">
-Các công thức trên đều được chứng minh ở phần 3 bài tập.
+Các công thức trên đều được chứng minh ở phần bài tập.
 </p>
 
 Xét một vector $D$ chiều gồm các số thực $\mathbf{x} =(x_{1}, \dots, x_{D})^T$. Ta định nghĩa phân phối chuẩn trên vector $\mathbf{x}$ là:
@@ -173,3 +179,106 @@ Việc phương sai mẫu $\sigma^2_{ML}$ tiến dần về phương sai thực 
 </p>
 
 Tuy nhiên với các mô hình ML phức tạp có nhiều tham số thì vấn đề bias này lại trở nên nghiêm trọng. Ở các phần sau, tác giả sẽ cho thấy vấn đề bias của maximum likelihood là một trong những nguyên nhân gây ra over-fitting.
+
+## Chứng minh trung bình và phương sai mẫu
+
+<p class="takeaway"> Phần này optional, mình chứng minh chỉ để hiểu hơn thôi </p>
+
+Xét 1 mẫu $\mathcal{D}$ gồm $N$ quan sát ${} x_{1}, \dots, x_{N} {}$ và $\mathcal{D} \overset{i.i.d}{\sim} \mathcal{N}(\mu, \sigma^2)$. Đặt $\mu_{ML}$ là trung bình mẫu và $\sigma^2_{ML}$ là phương sai mẫu.
+
+### Trung bình mẫu
+
+Ta có:
+
+$$
+\begin{aligned}
+\mathbb{E}[\mu_{ML}] &= \mathbb{E}\left[ \frac{1}{N} \sum_{n=1}^N x_{n} \right] \\
+&= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}] \\
+&= \frac{1}{N} \sum_{n=1}^N \mu \\
+&= \mu
+\end{aligned}
+$$
+
+### Phương sai mẫu
+
+Ta có:
+
+$$
+\begin{aligned}
+\mathbb{E}[\sigma^2_{ML}] &= \mathbb{E}\left[ \frac{1}{N} \sum_{n=1}^N (x_{n} - \mu_{{ML}})^2 \right] \\
+&= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[(x_{n} - \mu_{ML})^2] \\
+&= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}^2 -2x_{n}\mu_{ML} + \mu_{ML}^2] \\
+&= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}^2] -2\mathbb{E}[x_{n}\mu_{ML}] + \mathbb{E}[\mu_{ML}^2] \\
+\end{aligned}
+$$
+
+Như đã biết ở trước đó thì moment bậc 2 của phân phối chuẩn sẽ có giá trị là $\mathbb{E}[X^2] = \mu^2 + \sigma^2$. Còn giá trị $\mathbb{E}[x_n\mu_{ML}]$ sẽ được tính như sau (nhớ là các quan sát độc lập với nhau, do đó với hai quan sát $x_i$ và $x_j$ bất kì, ta có $\mathbb{E}[x_ix_j] = \mathbb{E}[x_i]\mathbb{E}[x_j]$):
+
+$$
+\begin{aligned}
+\mathbb{E}[x_{n}\mu_{ML}] &= \mathbb{E}\left[ \frac{1}{N} \sum_{i=1}^N x_n x_{i} \right] \\
+&= \frac{1}{N} \left[ \sum_{i \neq n} \mathbb{E}[x_{n}x_{i}] + \mathbb{E}[x_{n}^2] \right] \\
+&= \frac{1}{N} \left[ (N-1)\mu^2 + \mu^2 + \sigma^2 \right] \\
+&= \mu^2 + \frac{\sigma^2}{N}
+\end{aligned}
+$$
+
+Ta chỉ cần tính giá trị còn lại là $\mathbb{E}[\mu_{ML}^2]$. Trước tiên ta cần biết công thức sau:
+
+$$
+\left( \sum_{n=1}^N x_{n} \right)^2 = \sum_{n=1}^N x_{n}^2 + \sum_{j=1}^N\sum_{i \neq j}^N x_i x_j
+$$
+
+Chứng minh này công thức này mình thua (các bạn có thể xem thêm ở <d-footnote>https://math.stackexchange.com/questions/329344/what-is-the-square-of-summation</d-footnote>). Sau khi có công thức rồi thì tính thôi nào:
+
+$$
+\begin{aligned}
+\mathbb{E}[\mu_{ML}^2] &= \mathbb{E}\left[ \frac{1}{N^2} \left( \sum_{n=1}^N x_{n} \right)^2 \right] \\
+&= \frac{1}{N^2} \mathbb{E}\left[ \sum_{n=1}^N x_{n}^2 + \sum_{j=1}^N\sum_{i \neq j}^{N} x_{i}x_{j} \right] \\
+&= \frac{1}{N^2} \left[ \sum_{n=1}^N \mathbb{E}[x_{n}^2] + \sum_{j=1}^N\sum_{i \neq j}^{N} \mathbb{E}[x_{i}x_{j}] \right] \\
+&= \frac{1}{N^2} \left( N(\mu^2 + \sigma^2) + \sum_{j=1}^N\sum_{i\neq j}^{N} \mu^2 \right)
+\end{aligned}
+$$
+
+Ở đoạn cuối, ta thấy như sau:
+
+$$
+\begin{aligned}
+\sum_{j=1}^N\sum_{i \neq j}^{N} \mu^2 &= (N-1)\mu^2 + ... + (N-1)\mu^2 \hspace{7pt} \text{($N$ lần)} \\
+&= N(N-1)\mu^2 \\
+\end{aligned}
+$$
+
+Thay ngược vào phương trình của $\mathbb{E}[\mu_{ML}^2]$ ta được:
+
+$$
+\begin{aligned}
+\mathbb{E}[\mu_{ML}^2] &= \frac{1}{N^2} \left( N(\mu^2 + \sigma^2) + N(N-1)\mu^2 \right) \\
+&= \mu^2 + \frac{\sigma^2}{N} = \mathbb{E}[x_{n}\mu_{ML}]
+\end{aligned}
+$$
+
+Sau khi đã có cả 3, ta chứng minh được, mình đi ngủ đây, dài vãi 💀.
+
+$$
+\begin{aligned}
+\mathbb{E}[\sigma^2_{ML}] &= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}^2] -\mathbb{E}[x_{n}\mu_{ML}] \\
+&= \frac{1}{N} \sum_{n=1}^N \left( \sigma^2 + \mu^2 - \mu^2 - \frac{\sigma^2}{N} \right) \\
+&= \frac{1}{N} \sum_{n=1}^N \left( \frac{N-1}{N} \sigma^2 \right) \\
+&= \frac{(N-1)}{N} \sigma^2
+\end{aligned}
+$$
+
+Sau quả tour de force chứng minh phía trên, có thể thấy $\sigma^2_{ML}$ không được như kì vọng lắm khi nó bị lệch đi một giá trị $(N-1)/N$, ta có thể gọi đây là *bias* khi mà cố gắng xấp xỉ cho những dữ liệu mà ta chưa thấy bằng một lượng hữu hạn dữ liệu mà ta có. Vậy ta muốn loại bỏ bias này, vậy thử nhân kì vọng với $N/(N-1)$ xem sao:
+
+$$
+\begin{aligned}
+\frac{N}{N-1}\mathbb{E}[\sigma^2_{ML}] &= \sigma^2  \\
+\mathbb{E}\left[\frac{N}{N-1} \frac{1}{N} \sum_{n=1}^N (x_n - \mu_{ML})\right]&= \sigma^2 \\
+\mathbb{E}\left[\frac{1}{N-1} \sum_{n=1}^N (x_n - \mu_{ML})\right]&= \sigma^2
+\end{aligned}
+$$
+
+Vậy để tối ưu như kì vọng, ta phải chia cho $N-1$ thay vì $N$ ở phương sai mẫu.
+
+{% include figure.liquid class="img-fluid" caption="Reaction của mình" path="https://preview.redd.it/man-im-dead-v0-ymr5u3c0bjsa1.jpg?auto=webp&s=364c87d710ec0cda25a8e23fcbf1dbd692d0a597" %}

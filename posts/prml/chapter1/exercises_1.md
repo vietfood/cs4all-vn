@@ -235,6 +235,41 @@ Do nếu $g(y) = \alpha y + \beta$ thì $g"(y) = 0$ với mọi $y$.
 
 Vậy $p_y'(\hat{y}) = 0 \implies p_x'(g(\hat{y})) = 0 \implies p_x'(\hat{x}) = p_{x}(g(\hat{y})) = 0 \implies  \hat{x} = g(\hat{y})$. Ta có thể thấy bằng việc chọn $g$ là một hàm tuyến tính thì $\hat{x} = g(\hat{y})$, do đó việc chọn hàm $g$ để biến đổi từ $X$ sang $Y$ là rất quan trọng. 
 
+{% include figure.liquid path="assets/img/prml/change_var.png" class="img-fluid" caption="Việc thay đổi biến của các mật độ xác suất (nguồn: Deep Learning - Foundations and Concepts by Christopher Bishop)" %}
+
+### Trường hợp nhiều chiều
+
+Công thức biến đổi pdf có thể áp dụng lên cho trường hợp vector ngẫu nhiên. Xét một pdf $p(\mathbf{x})$ trên một vector ngẫu nhiên $D$-chiều $\mathbf{x} = (x_{1}, \dots, x_{D})^T$, và giả sử ta biến đổi sang một vector ngẫu nhiên mới $\mathbf{y} =(y_{1}, \dots, y_{D})^T$ thông qua $\mathbf{x} = \mathbf{g}(\mathbf{y})$ ($\mathbf{g}$ là một hàm vector và ta giả sử $\mathbf{x}$ và $\mathbf{y}$ cùng chiều cho không phức tạp). Khi đó:
+
+$$
+p_{\mathbf{y}}(\mathbf{y}) = p_{\mathbf{x}}(\mathbf{x}) | \det \mathbf{J}|
+$$
+
+trong đó $\mathbf{J}$ là **jacobian matrix** và:
+
+$$
+\begin{aligned}
+\mathbf{J} &= \begin{bmatrix}
+\frac{\partial \mathbf{g}}{\partial y_{1}} & \dots & \frac{\partial \mathbf{g}}{\partial y_{D}}
+\end{bmatrix} \\
+&= \begin{bmatrix}
+\nabla^T g_{1} \\
+\vdots \\
+\nabla^T g_{D}
+\end{bmatrix} \\
+&= \begin{bmatrix}
+\frac{\partial g_{1}}{\partial y_{1}} & \dots & \frac{\partial g_{1}}{\partial y_{D}} \\
+\vdots & \ddots & \vdots \\ \frac{\partial g_{D}}{\partial y_{1}} & \dots & \frac{\partial g_{D}}{\partial y_{D}}
+\end{bmatrix}
+\end{aligned}
+$$
+
+<p class="takeaway" markdown=1>
+Ta có thể tưởng tượng việc đổi biến là việc thay đổi đi "space" (kiểu như expanding hay contracting, ...) của biến đó, ví dụ như một vùng vô cùng nhỏ (infinitesimal region) $\Delta \mathbf{x}$ xung quanh điểm $\mathbf{x}$ sẽ được biến đổi sang một vùng vô cùng nhỏ mới $\Delta \mathbf{y}$ xung quanh điểm $\mathbf{x} = \mathbf{g}(\mathbf{y})$ (vùng này có thể expand hoặc contract lại). Giá trị tuyệt đối của định thức của Jacobian biểu diễn tỉ lệ giữa các vùng này với nhau (tương tự trong 2D, $dx /dy$, các "vùng vô cùng nhỏ" này là "các đoạn vô cùng nhỏ"). 
+</p>
+
+{% include figure.liquid path="assets/img/prml/change_var_mul.png" class="img-fluid" caption="Việc thay đổi biến của các mật độ xác suất ở nhiều chiều (nguồn: Deep Learning - Foundations and Concepts by Christopher Bishop)" %}
+
 ## Bài 1-5
 
 Dựa vào các tính chất sau của kì vọng <d-footnote>MIT Expectation Slide (https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-fall-2005/6ad0342f836f80c219470870db432c18_ln14.pdf)</d-foonote>:

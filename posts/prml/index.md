@@ -2,6 +2,7 @@
 layout: distill
 permalink: /prml/
 title: "Học máy trông nặng nhọc vậy"
+subtitle: "PRML"
 description: "Chào mọi người! Chào mừng các bạn đã ghé qua Góc Học Máy (Machine Learning) của tụi mình! 👋 Để khởi động, tụi mình sẽ cùng nhau 'chiến đấu' với một 'trùm cuối' khá nổi tiếng trong làng ML là cuốn 'Pattern Recognition and Machine Learning' (PRML) của Christopher Bishop."
 date: 2025-04-22
 future: true
@@ -14,7 +15,7 @@ next_section: true
 previous_section_url: "/cs4all-vn/"
 previous_section_name: "Trang chủ"
 next_section_url: "/cs4all-vn/prml/chapter1/polynomial_curve"
-next_section_name: "Trang chủ"
+next_section_name: "Polynomial Curve"
 
 authors:
   - name: Lê Nguyễn
