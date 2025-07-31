@@ -6,8 +6,8 @@ title: 🧑‍💻cs4all-vn # the website title (if blank, full name will be use
 first_name:
 middle_name:
 last_name:
-contact_note: >
-  Feel free to contact jaaustin [at] google [dot] com with any questions or comments.
+# contact_note: >
+#   Feel free to contact jaaustin [at] google [dot] com with any questions or comments.
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
@@ -16,7 +16,7 @@ keywords: # add your own keywords or leave empty
 lang: # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: favicon.png # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
-url: https://lenguyen18072003.github.io # the base hostname & protocol for your site
+url: https://vietfood.github.io # the base hostname & protocol for your site
 baseurl: /cs4all-vn/ # the subpath of your site, e.g. /blog/. Leave blank for root
 last_updated: false # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
@@ -101,7 +101,7 @@ related_blog_posts:
 # Giscus comments (RECOMMENDED)
 # Follow instructions on https://giscus.app/ to setup for your repo to fill out the information below.
 giscus:
-  repo: lenguyen1807/cs4all-vn # <your-github-user-name>/<your-github-repo-name>
+  repo: vietfood/cs4all-vn # <your-github-user-name>/<your-github-repo-name>
   repo_id: R_kgDOOKi6mw # leave empty or specify your repo_id (see https://giscus.app/)
   category: General # name of the category under which discussions will be created
   category_id: DIC_kwDOOKi6m84CpVs_ # leave empty or specify your category_id (see https://giscus.app/)

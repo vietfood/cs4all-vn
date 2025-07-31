@@ -100,13 +100,13 @@ Xét hai biến ngẫu nhiên $X$ và $Y$, trong đó $X$ có thể nhận các 
 
 <p class="takeaway">Dựa vào hình, nếu ta xem mỗi hai biến ngẫu nhiên $X$ và $Y$ tạo nên hộp có các ô như trên. Ta xem mỗi lần thử là một viên bi, cứ một lần thử, ta sẽ thả một viên bi vào hộp trên, vậy trong $N$ lần thử, ta sẽ có $N$ viên bi nằm ở các ô ngẫu nhiên trong hộp. Vậy xác suất để một lần thử có $X = x_i$ và $Y = y_j$ chính là tỉ lệ giữa số bi nằm trong ô $X = x_i$ và $Y = y_j$ (là $n_{ij}$) với tổng viên bi (là $N$).</p>
 
-<p markdown=1 class="takeaway">Ta đọc dấu $,$ trong công thức xác suất đồng thời là "và", tức là $p(X = x_i, Y = y_j)$ sẽ đọc là "xác suất của $X = x_i$ và $Y = y_j$". Do là phép "và" nên có tính đối xứng, nghĩa là $p(X =x_i, Y = y_j) = p(Y = y_j, X = x_i)$. Hiểu một cách khác thì ô $i, j$ hay ô $j, i$ đều như nhau nên số viên bi tại đó là bằng nhau.</p>
-
 Ta gọi xác suất mà $X = x_i$ và $Y = y_j$ cùng xảy ra là **xác suất đồng thời** của $X = x_i$ và $Y = y_j$, kí hiệu là $p(X = x_i, Y = y_j)$.  Như đã nói ở trên, $p(X = x_i, Y = y_j)$ chính là số lần thử mà $X = x_i$ và $Y = y_j$ xảy ra ($n_{ij}$) chia cho tổng số lần thử ($N$). Xác suất này được tính như sau:
 
 $$
 p(X = x_{i}, Y = y_{j}) = \frac{n_{ij}}{N}
 $$
+
+<p markdown=1 class="takeaway">Ta đọc dấu $,$ trong công thức xác suất đồng thời là "và", tức là $p(X = x_i, Y = y_j)$ sẽ đọc là "xác suất của $X = x_i$ và $Y = y_j$". Do là phép "và" nên có tính đối xứng, nghĩa là $p(X =x_i, Y = y_j) = p(Y = y_j, X = x_i)$. Hiểu một cách khác thì ô $i, j$ hay ô $j, i$ đều như nhau nên số viên bi tại đó là bằng nhau.</p>
 
 Tương tự, xác suất mà $X = x_i$ không quan tâm $Y$ bao nhiêu là $p(X = x_{i})$ và được tính như sau:
 
@@ -137,7 +137,7 @@ $$
 
 Công thức phía trên chính là **sum rule** trong xác suất. Ngoài ra $p(X = x_{i})$ đôi khi còn được gọi là **marginal probability** (xác suất biên) bởi vì $p(X = x_i)$ có được bằng cách tổng các biến khác (ở đây là $Y$) (còn có thể gọi cách tổng này là *marginalizing*, tìm xác suất biến ta cần bằng cách tổng các biến còn lại).
 
-Giả sử ta chỉ xét nhưng viên bi nằm ở hàng dọc $X = x_i$ (tức là ta không cần quan tâm đến cái hộp to nữa, chỉ cần quan tâm một ô dọc của cái hộp thôi), khi đó tỉ lệ những viên bi nằm ở ô $Y = y_j$ được viết là $p(Y = y_{j} \mid X = x_{i})$. Xác suất này được gọi là **conditional probability** (xác suất có điều kiện) của $Y = y_{j}$ biết (given) $X = x_i$ và có công thức như sau:
+Giả sử ta chỉ xét những viên bi nằm ở hàng dọc $X = x_i$ (tức là ta không cần quan tâm đến cái hộp to nữa, chỉ cần quan tâm một ô dọc của cái hộp thôi), khi đó tỉ lệ những viên bi nằm ở ô $Y = y_j$ được viết là $p(Y = y_{j} \mid X = x_{i})$. Xác suất này được gọi là **conditional probability** (xác suất có điều kiện) của $Y = y_{j}$ biết (given) $X = x_i$ và có công thức như sau:
 
 $$
 p(Y = y_{j} \mid X = x_{i}) =  \frac{n_{ij}}{c_{i}}
@@ -262,7 +262,7 @@ Vậy có thể thấy, mặc dù yêu thích bà Hoa hơn, nhưng khả năng A
 
 <p markdown=1 class="takeaway">Trong bài toán trên, ta có thể formal nó thành $p(A \mid B)$, trong đó $p(A)$ sẽ là xác suất tiên nghiệm. Trước khi biết An mua cái bánh nào, thì khi được hỏi An sẽ mua bánh từ bà bán bánh nào, thông tin duy nhất ta biết là An thích bà bán bánh nào hơn, tức là chỉ biết được $p(A)$. Thế nhưng sau khi ta biết được An đã mua cái bánh nào, thì khi được hỏi An sẽ mua bánh từ bà bán bánh nào, ta có thể dùng công thức Bayes để tính ra, do đó xác suất $p(A \mid B)$ được gọi là xác suất hậu nghiệm, bởi vì ta có được xác suất này sau khi *quan sát* được An đã mua cái bánh nào (bằng chứng $B$).  Có thể thấy, bà Lan sẽ có số bánh xèo nhiều hơn do đó việc quan sát rằng An đã chọn mua bánh xèo sẽ khiến quyết định nghĩ rằng An mua từ bà Lan đã cao hơn.</p>
 
-Trong công thức Bayes của $p(X \mid Y)$, ta gọi $p(X)$ là **xác suất tiên nghiệm** (prior probability), $p(Y \mid X)$ là **likelihood**, $p(Y)$ được gọi là **xác suất biên** (marginal probability), $Y$ được gọi là **bằng chứng** (evidence), $X$ được gọi là **giả thiết** (hypothesis) và $p(X \mid Y)$ là **xác suất hậu nghiệm** (posterior probability). 
+Trong công thức Bayes của $p(X \mid Y)$, ta gọi $p(X)$ là **xác suất tiên nghiệm** (prior probability), $p(Y \mid X)$ là **likelihood**, $p(Y)$ được gọi là **xác suất biên** (marginal probability), $Y$ được gọi là **bằng chứng** (evidence), $X$ được gọi là **giả thuyết** (hypothesis) và $p(X \mid Y)$ là **xác suất hậu nghiệm** (posterior probability). 
 
 Nếu một xác suất đồng thời $p(X, Y)$ có thể đưa về thành tích của hai xác suất biên $p(X)$ và $p(Y)$, nghĩa là:
 

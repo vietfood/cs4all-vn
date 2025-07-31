@@ -90,10 +90,10 @@ Tương tự như biến ngẫu nhiên rời rạc, sum rule, product rule và �
 
 $$
 \begin{aligned}
-p(x) &= \int p(x, y) dy \\
-\text{but} \hspace{3pt} p(x, y) &= p(y \mid x) p(x) \\
+p(x) &= \int p(x, y) dy \hspace{5pt} \text{(sum rule)} \\
+\text{and} \hspace{5pt} p(x, y) &= p(y \mid x) p(x) \hspace{5pt} \text{(product rule)} \\
 \implies p(x) &= \int p(y \mid x) p(x) dy \\
-\implies p(y) &= \int p(x, y)dx \int p(y \mid x) p(x) dx
+\implies p(y) &= \int p(y, x)dx = \int p(x, y)dx = \int p(y \mid x) p(x) dx
 \end{aligned}
 $$
 

@@ -122,7 +122,7 @@ $$
 \hat{\mu}, \hat{\sigma}^2 = \text{arg}\max_{\mu, \sigma^2} \ln \mathcal{L}(\mu, \sigma^2 \mid \mathcal{D})
 $$
 
-Sử dụng cách thức cực đại hàm log likehood, ta có thể viết hàm likelihood lại như sau:
+Do đó, ta có thể viết hàm likelihood lại như sau:
 
 $$
 \begin{aligned}
@@ -131,13 +131,13 @@ $$
 \end{aligned}
 $$
 
-Cực đại hàm log likelihood phía trên bằng cách dùng $\mu$, ta có:
+Cực đại hàm log likelihood phía trên theo $\mu$, ta có:
 
 $$
 \mu_{ML} = \frac{1}{N} \sum_{n=1}^N x_{n}
 $$
 
-trong đó $\mu_{ML}$ được gọi là **trung bình mẫu** (sample mean) tức là trung bình của các quan sát $\{x_n\}$ mà ta quan sát được. Còn nếu ta cực đại bằng cách dùng $\sigma^2$, ta có:
+trong đó $\mu_{ML}$ được gọi là **trung bình mẫu** (sample mean) tức là trung bình của các quan sát $\{x_n\}$ mà ta quan sát được. Còn nếu ta cực đại theo $\sigma^2$, ta có:
 
 $$
 \sigma^2_{ML} = \frac{1}{N} \sum_{n=1}^N (x_{n} - \mu_{ML})^2
@@ -205,8 +205,7 @@ Ta có:
 
 $$
 \begin{aligned}
-\mathbb{E}[\sigma^2_{ML}] &= \mathbb{E}\left[ \frac{1}{N} \sum_{n=1}^N (x_{n} - \mu_{{ML}})^2 \right] \\
-&= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[(x_{n} - \mu_{ML})^2] \\
+\mathbb{E}[\sigma^2_{ML}] &= \mathbb{E}\left[ \frac{1}{N} \sum_{n=1}^N (x_{n} - \mu_{ML})^2 \right] \\
 &= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}^2 -2x_{n}\mu_{ML} + \mu_{ML}^2] \\
 &= \frac{1}{N} \sum_{n=1}^N \mathbb{E}[x_{n}^2] -2\mathbb{E}[x_{n}\mu_{ML}] + \mathbb{E}[\mu_{ML}^2] \\
 \end{aligned}
@@ -274,8 +273,8 @@ Sau quả tour de force chứng minh phía trên, có thể thấy $\sigma^2_{ML
 $$
 \begin{aligned}
 \frac{N}{N-1}\mathbb{E}[\sigma^2_{ML}] &= \sigma^2  \\
-\mathbb{E}\left[\frac{N}{N-1} \frac{1}{N} \sum_{n=1}^N (x_n - \mu_{ML})\right]&= \sigma^2 \\
-\mathbb{E}\left[\frac{1}{N-1} \sum_{n=1}^N (x_n - \mu_{ML})\right]&= \sigma^2
+\mathbb{E}\left[\frac{N}{N-1} \frac{1}{N} \sum_{n=1}^N (x_n - \mu_{ML})^2\right]&= \sigma^2 \\
+\mathbb{E}\left[\frac{1}{N-1} \sum_{n=1}^N (x_n - \mu_{ML})^2\right]&= \sigma^2
 \end{aligned}
 $$
 

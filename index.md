@@ -13,10 +13,6 @@ giscus_comments: true
 previous_section: false 
 next_section: false
 
-# Add a table of contents to your post.
-#   - make sure that TOC names match the actual section names
-#     for hyperlinks within the post to work correctly.
-#   - please use this format rather than manually creating a markdown table of contents.
 toc:
   - name: Giới thiệu
   - name: Khám phá các chuyên mục
@@ -47,7 +43,7 @@ Và đó cũng chính là một lý do lớn thôi thúc mình xây dựng nên 
 
 Mình tin rằng kiến thức là để sẻ chia (như "One for All" vậy đó!), và hy vọng nơi này sẽ không chỉ giúp các bạn khám phá CS mà còn kết nối những người cùng đam mê, dần dần xây dựng một cộng đồng CS thật mạnh ở Việt Nam. 💪
 
-## Khám phá các Chuyên mục
+## Khám phá các môn học
 
 Okay, giờ thì cùng xem chúng ta có thể khám phá những gì ở đây nhé! Tụi mình đã chia thành hai khu vực chính: Khoa học Máy tính và Toán học nền tảng.
 
@@ -56,21 +52,23 @@ Okay, giờ thì cùng xem chúng ta có thể khám phá những gì ở đây 
 Đây là nơi chúng ta đi sâu vào các lĩnh vực chuyên ngành thú vị của CS. Đừng quên là mỗi lĩnh vực thường sẽ cần một số "vũ khí" toán học nhất định đó nha!
 
 * ✈️ **[Học Máy (Machine Learning)](./prml)**: Cùng "chiến" cuốn sách kinh điển PRML và khám phá thế giới AI. Để đi sâu vào đây, bạn sẽ cần nắm vững **Đại số Tuyến tính, Giải tích, Xác suất Thống kê** và một chút **Tối ưu hóa** đấy!
-* 🚧 **[Tính toán Hiệu năng cao (High-Performance Computing)]()**: Bạn muốn biết làm sao để tận dụng tối đa sức mạnh của card đồ họa (GPU) để tăng tốc các tác vụ tính toán nặng? Cùng khám phá lập trình GPU nhé!.
+<!-- * 🚧 **[Tính toán Hiệu năng cao (High-Performance Computing)]()**: Bạn muốn biết làm sao để tận dụng tối đa sức mạnh của card đồ họa (GPU) để tăng tốc các tác vụ tính toán nặng? Cùng khám phá lập trình GPU nhé!. -->
 <!-- * 🚧 **[Đồ họa Máy tính (Computer Graphics)]()**: Tìm hiểu cách 'vẽ' nên những thế giới ảo sống động và các hiệu ứng hình ảnh mãn nhãn. Môn này 'ngốn' rất nhiều **Đại số Tuyến tính** (cực kỳ quan trọng!), cùng với **Giải tích** và **Hình học** đó. -->
-* 🚧 **[Trình biên dịch (Compilers)]()**: Hé lộ 'phép thuật' biến những dòng code bạn viết thành ngôn ngữ máy tính có thể hiểu và thực thi. Để hiểu sâu về nó, bạn sẽ cần làm quen với **Logic toán, Lý thuyết Automata** và **Ngôn ngữ Hình thức**.
+<!-- * 🚧 **[Trình biên dịch (Compilers)]()**: Hé lộ 'phép thuật' biến những dòng code bạn viết thành ngôn ngữ máy tính có thể hiểu và thực thi. Để hiểu sâu về nó, bạn sẽ cần làm quen với **Logic toán, Lý thuyết Automata** và **Ngôn ngữ Hình thức**. -->
 <!-- * 🚧 **[Ngôn ngữ Lập trình (Programming Languages)]()**: Khám phá cách các ngôn ngữ được thiết kế, phân loại và hoạt động, cũng như các mô hình lập trình. **Logic, Lý thuyết Tập hợp, Lý thuyết Hình thức (Type Theory)** và đôi khi **Lambda Calculus** là những chìa khóa quan trọng ở đây. -->
 * 😚 **[Thuật toán (Algorithms)](https://wiki.vnoi.info/)**: Nền tảng cốt lõi của việc giải quyết vấn đề. Để rèn luyện tư duy và kỹ năng giải thuật cho các kỳ thi đấu đỉnh cao, **VNOI Wiki** là nguồn tài liệu số một không thể bỏ qua!
 
 ### Toán học (Mathematics)
 
-Như bạn thấy ở trên, Toán học len lỏi vào mọi ngóc ngách của Khoa học Máy tính! Xây dựng một nền tảng Toán vững chắc sẽ giúp hành trình khám phá CS của bạn dễ dàng và sâu sắc hơn rất nhiều. Dưới đây là các chuyên mục Toán dự kiến sẽ có mặt:
+Như bạn thấy ở trên, Toán học len lỏi vào mọi ngóc ngách của Khoa học Máy tính! Xây dựng một nền tảng Toán vững chắc sẽ giúp hành trình khám phá CS của bạn dễ dàng và sâu sắc hơn rất nhiều. 
+
+<!-- Dưới đây là các chuyên mục Toán dự kiến sẽ có mặt: -->
 
 * 🚧 **[Đại số Tuyến tính (Linear Algebra)]()**: Công cụ cực kì quan trọng cho ML, Graphics, HPC... Làm việc với vectors, ma trận, không gian đa chiều và các phép biến đổi. Không biết cái này thì hơi 'toang' nha! 😉
 <!-- * 🚧 **[Tối ưu hóa (Optimization)]()**: Tìm kiếm giải pháp 'tốt nhất' (cực đại, cực tiểu) cho một vấn đề trong những điều kiện ràng buộc. Cốt lõi của việc huấn luyện hầu hết các mô hình ML. -->
 * 🚧 **[Lý thuyết Tính toán (Theory of Computation)]()**: Khám phá nền tảng lý thuyết của Khoa học Máy tính! Chúng ta sẽ bắt đầu với **Lý thuyết Automata & Ngôn ngữ Hình thức** (mô hình máy trừu tượng, ngữ pháp), sau đó đi sâu vào **Tính toán được** (giới hạn của máy tính, bài toán dừng) và **Độ phức tạp** (P vs NP?). Đây là cốt lõi để hiểu bản chất của tính toán, và tụi mình dự định sẽ đi theo lộ trình của cuốn sách kinh điển **"Introduction to the Theory of Computation" của Sipser**. Rất quan trọng cho Compiler và cả việc hiểu sâu về thuật toán.
 
-... và còn nhiều chuyên mục khác sẽ sớm ra mắt! Hãy cùng nhau học hỏi và xây dựng trang wiki này nhé!
+... và còn nhiều môn học khác sẽ sớm ra mắt! Hãy cùng nhau học hỏi và xây dựng trang wiki này nhé!
 
 > - 🚧: Dự định sẽ thực hiện / Sắp có.
 > - ✈️: Đang thực hiện / Đang xây dựng.

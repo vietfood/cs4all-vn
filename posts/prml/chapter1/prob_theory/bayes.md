@@ -104,10 +104,12 @@ Hết ví dụ thì ta đã rõ hơn Bayesian chút rồi. Ta gọi $P(Y \mid X)
 Định lý Bayes cũng có thể áp dụng trong Machine Leanring như sau. Giả sử rằng ta có tập dữ liệu $\mathcal{D}$ và một model có bộ tham số là $\mathbf{w}$. Mục đích của ta là với tập dữ liệu $\mathcal{D}$ như này, bộ tham số $\mathbf{w}$ của ta như nào mới là tốt, tức là tìm xác suất $p(\mathbf{w} \mid \mathcal{D})$.
 
 Giả sử ta đã chọn được một mô hình với bộ tham số $\mathbf{w}$. Trước khi có tập dữ liệu $\mathcal{D}$, ta ngầm giả định rằng $\mathbf{w}$ có phân phối là $p(\mathbf{w})$. Sử dụng định lý Bayes, ta có:
+
 $$
 p(\mathbf{w} \mid \mathcal{D}) = \frac{p(\mathcal{D} \mid \mathbf{w})p(\mathbf{w})}{p(\mathcal{D})}
 $$
-Phân phối $p(\mathcal{D} \mid \mathbf{w})$ ở bên phải của định lý Bayes là một hàm phụ thuộc vào $\mathcal{D}$, thế nhưng nếu ta xem phân phối ấy là một hàm phụ thuộc vào $\mathbf{w}$, thì khi đó ta gọi $p(\mathcal{D} \mid \mathbf{w})$ là **hàm likelihood** (likelihood function).
+
+Phân phối $p(\mathcal{D} \mid \mathbf{w})$ ở bên phải của định lý Bayes là một hàm phụ thuộc vào $\mathcal{D}$, thế nhưng nếu ta xem phân phối ấy là một hàm phụ thuộc vào $\mathbf{w}$, thì khi đó, gọi $p(\mathcal{D} \mid \mathbf{w})$ là **hàm likelihood** (likelihood function).
 
 <p markdown=1 class="takeaway">
 Thay vì viết $p(\mathcal{D} \mid \mathbf{w})$ để dễ bị nhầm lẫn giữa phân phối xác suất và hàm likelihood, ta sẽ kí hiệu:
@@ -116,7 +118,7 @@ Thay vì viết $p(\mathcal{D} \mid \mathbf{w})$ để dễ bị nhầm lẫn gi
 \mathcal{L}(\mathbf{w} \mid \mathcal{D}) = p(\mathcal{D} \mid \mathbf{w})
 \\]
 
-trong đó $\mathcal{L}(\mathbf{w} \mid \mathcal{D})$ là hàm likelihood có biến là $\mathbf{w}$ còn $p(\mathcal{D} \mid \mathbf{w})$ là phân phối có biến là $\mathcal{D}$.
+trong đó $\mathcal{L}(\mathbf{w} \mid \mathcal{D})$ là hàm likelihood có biến là $\mathbf{w}$ và không phải là một phân phối xác suất (why ?). Còn $p(\mathcal{D} \mid \mathbf{w})$ là phân phối xác suất có biến là $\mathcal{D}$.
 </p>
 
 Dựa vào định nghĩa của likelihood, ta có thể viết lại định lý Bayes như sau:
@@ -125,13 +127,9 @@ $$
 \text{posterior} \propto \text{likelihood} \times \text{prior}
 $$
 
-trong đó $\text{likelihood}, \text{posterior}$ và $\text{prior}$ đều là các hàm phụ thuộc vào $\mathbf{w}$. Còn giá trị $p(\mathcal{D})$ dưới mẫu là một hằng số, dùng để đảm bảo rằng phân phối hậu nghiệm ở bên phải định lý Bayes đúng là một phân phối (mật độ xác suất).
+trong đó $\text{likelihood}, \text{posterior}$ và $\text{prior}$ đều là các hàm phụ thuộc vào $\mathbf{w}$. Còn giá trị $p(\mathcal{D})$ dưới mẫu là một hằng số, dùng để đảm bảo rằng phân phối hậu nghiệm ở bên phải định lý Bayes đúng là một phân phối (mật độ xác suất). Thông thường, $p(\mathcal{D})$ có thể được tính thông qua sum rule.
 
-<p markdown=1 class="takeaway">
-Kí hiệu $\propto$ nghĩa là tỉ lệ. Ví dụ, chiều cao ($h$) $= 1.2 \times$ cân nặng ($w$), lúc này ta nói chiều cao tỉ lệ với cân nặng hay $h \propto w$. Ở định lý Bayes, nếu ta xem $1 / p(\mathcal{D})$ là một hằng số (mà nó là một hằng số thật, bởi vì $\mathcal{D}$ không đổi rồi) thì $p(\mathbf{w} \mid \mathcal{D}) \propto \mathcal{L}(\mathbf{w} \mid \mathcal{D})p(\mathbf{w})$.
-</p>
-
-Áp dụng sum rule và product rule ([Probability Densities](/cs4all-vn/prml/chapter1/prob_theory/density)) cho biến tục, ta có:
+Áp dụng sum rule và product rule ([Probability Densities](/cs4all-vn/prml/chapter1/prob_theory/density)) cho biến liên tục, ta có:
 
 $$
 p(\mathcal{D}) = \int p(\mathcal{D} \mid \mathbf{w}) p(\mathbf{w}) d\mathbf{w}
@@ -146,12 +144,16 @@ $$
 \end{aligned}
 $$
 
-Còn việc $p(\mathbf{w} \mid \mathcal{D}) \geq 0$ mình nghĩ khá là dễ thấy rồi.
-
-Vậy sinh ra cái Bayes này làm gì, mục đích của chúng ta đó là cố gắng tìm bộ tham số $\mathbf{w}$ sao cho $p(\mathbf{w} \mid \mathcal{D})$ là tốt nhất, kiểu như ta đã biết trước tập dữ liệu $\mathcal{D}$ (tức là ta đã biết trước kết quả rồi), ta cần tìm mô hình (tham số $\mathbf{w}$) phù hợp với $\mathcal{D}$ nhất (tức là ta đi tìm nguyên nhân cho ra kết quả và nguyên nhân đó phải là phù hợp với kết quả nhất, vậy là tìm xác suất $p(\mathbf{w}\mid \mathcal{D})$ lớn nhất) (mình copy cách giải thích này từ <d-footnote>Machine Learning cơ bản - Bài 31 (https://machinelearningcoban.com/2017/07/17/mlemap/)</d-footnote>.
+Còn việc $p(\mathbf{w} \mid \mathcal{D}) \geq 0$ mình nghĩ khá là dễ thấy rồi. Nhờ $p(\mathcal{D})$ mà $p(\mathbf{w} \mid \mathcal{D})$ là một phân phối xác suất, ta còn có thể xem $p(\mathcal{D})$ như là một hằng số dùng để chuẩn hoá $p(\mathbf{w} \mid \mathcal{D})$.
 
 <p markdown=1 class="takeaway">
-Ngoài cách giải thích trên, ta hãy xem xác suất như *mức độ của niềm tin* (degree of belief) tức là xác suất càng cao, ta càng tin là nó sẽ tốt (hoặc sẽ xảy ra). Trước khi có data quan sát được dữ liệu $\mathcal{D}$, ta tin rằng $\mathbf{w}$ sẽ tốt (là một mô hình phù hợp với $\mathcal{D}$) ở một mức độ nào đó, tức là $p(\mathbf{w})$, sau khi quan sát được dữ liệu ${} \mathcal{D}$ rồi, niềm tin về độ phù hợp của $\mathbf{w}$ với ${} \mathcal{D} {}$ sẽ thay đổi và có giá trị là $p(\mathbf{w} \mid \mathcal{D})$ 
+Kí hiệu $\propto$ nghĩa là tỉ lệ. Ví dụ, chiều cao ($h$) $= 1.2 \times$ cân nặng ($w$), lúc này ta nói chiều cao tỉ lệ với cân nặng hay $h \propto w$. Ở định lý Bayes, nếu ta xem $1 / p(\mathcal{D})$ là một hằng số (mà nó là một hằng số thật, bởi vì $\mathcal{D}$ không đổi rồi) thì $p(\mathbf{w} \mid \mathcal{D}) \propto \mathcal{L}(\mathbf{w} \mid \mathcal{D})p(\mathbf{w})$.
+</p>
+
+Vậy sinh ra cái Bayes này làm gì, mục đích của chúng ta đó là cố gắng tìm bộ tham số $\mathbf{w}$ sao cho $p(\mathbf{w} \mid \mathcal{D})$ là tốt nhất, kiểu như ta đã biết trước tập dữ liệu $\mathcal{D}$ (tức là ta đã biết trước kết quả rồi), ta cần tìm mô hình (tham số $\mathbf{w}$) phù hợp với $\mathcal{D}$ nhất (tức là ta đi tìm nguyên nhân cho ra kết quả và nguyên nhân đó phải là phù hợp với kết quả nhất, vậy là tìm xác suất $p(\mathbf{w}\mid \mathcal{D})$ lớn nhất) (mình copy cách giải thích này từ <d-footnote>Machine Learning cơ bản - Bài 31 (https://machinelearningcoban.com/2017/07/17/mlemap/)</d-footnote>).
+
+<p markdown=1 class="takeaway">
+Trước khi quan sát được dữ liệu $\mathcal{D}$, ta tin rằng $\mathbf{w}$ sẽ tốt (là một mô hình phù hợp với $\mathcal{D}$) ở một mức độ nào đó, tức là $p(\mathbf{w})$, sau khi quan sát được dữ liệu ${} \mathcal{D}$ rồi, niềm tin về độ phù hợp của $\mathbf{w}$ với ${} \mathcal{D} {}$ sẽ thay đổi và có giá trị là $p(\mathbf{w} \mid \mathcal{D})$. Còn giá trị likelihood $p(\mathcal{D} \mid \mathbf{w})$ có thể được hiểu như sau: nếu giả sử tham số là $\mathcal{w}$ thì xác suất (hay mức độ niềm tin) mà dữ liệu ta quan sát được là $\mathcal{D}$.
 </p>
 
 Đối với frequentist thì ta sẽ dùng phương pháp **maximum likelihood** (MLE) để tìm giá trị $p(\mathcal{D} \mid \mathbf{w})$ lớn nhất từ đó tìm được $p(\mathbf{w} \mid \mathcal{D})$ lớn nhất (frequentist giả sử rằng $p(\mathbf{w})$ và $p(\mathcal{D})$ là các hằng số, ở góc nhìn của frequentist, ta sẽ xem $\mathbf{w}$ như là một giá trị mà ta ước lượng được, do đó $p(\mathbf{w})$ là một hằng số) Ta sẽ tìm hiểu phương pháp này ở phần [Gaussian Distribution](/cs4all-vn/prml/chapter1/prob_theory/normal).
