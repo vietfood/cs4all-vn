@@ -1,7 +1,5 @@
 # 🇻🇳 cs4all-vn: Computer Science for Everyone (in Vietnamese)
 
-[👉 Đọc bản tiếng Việt tại đây](README_VI.md)
-
 ## 📚 Introduction
 
 Welcome to **cs4all-vn**, a community-driven project aiming to build a comprehensive, beginner-friendly, and accessible Computer Science wiki—**by and for Vietnamese learners**.
