@@ -1,38 +1,48 @@
-# cs4all-vn: Computer Science for Everyone (in Vietnamese) 🇻🇳
+# 🇻🇳 cs4all-vn: Computer Science for Everyone (in Vietnamese)
 
-[Đọc tiếng việt tại đây](README_VI.md)
+[👉 Đọc bản tiếng Việt tại đây](README_VI.md)
 
-## Introduction
+## 📚 Introduction
 
-Welcome to the repository for **cs4all-vn**, a community-driven project aiming to become a comprehensive, friendly, and accessible Computer Science wiki for Vietnamese students and learners everywhere!
+Welcome to **cs4all-vn**, a community-driven project aiming to build a comprehensive, beginner-friendly, and accessible Computer Science wiki—**by and for Vietnamese learners**.
 
-**[Visit the Live Wiki Here!](https://lenguyen1807.github.io/cs4all-vn/)** 
+**🌐 [Explore the Live Wiki](https://lenguyen1807.github.io/cs4all-vn/)**
 
-## Current Status
+## 🚧 Project Status
 
-This project is currently **under active development**. We are laying the foundations and starting content creation (beginning with Machine Learning based on Pattern Recognition and Machine Learning book by Christopher Bishop). We warmly welcome contributors!
+This project is currently in **active development**. We’re laying the groundwork and starting with content on **Machine Learning**, based on *Pattern Recognition and Machine Learning* by Christopher Bishop.
 
-## How to Contribute
+We’re just getting started—and we’re excited to grow with your help!
 
-We believe knowledge is best built together! You don't need to be an expert to contribute. Just do it and I'm really happy that I'm not alone anymore ✌️.
+## 🤝 How to Contribute
 
-## Acknowledgments
+We believe that knowledge grows best when shared.
 
-This project, both in its structure and spirit, draws heavily from and is inspired by the **["How To Scale Your Model"](https://jax-ml.github.io/scaling-book)** project by the team at Google DeepMind.
+Whether you’re a beginner or experienced developer, you’re welcome to contribute. Don’t worry about perfection—your participation matters, and it means a lot to know we're building this together ✌️
 
-* We extend our sincere gratitude to Jacob Austin, Sholto Douglas, Roy Frostig, Anselm Levskaya, Charlie Chen, Sharad Vikram, Federico Lebron, Peter Choy, Vinay Ramasesh, Albert Webson, James Bradbury, Reiner Pope, and everyone involved in creating such an insightful resource available at [github.com/jax-ml/scaling-book](https://github.com/jax-ml/scaling-book).
-* The website utilizes a Distill-style Jekyll theme originally created by **[al-folio](https://github.com/alshedivat/al-folio)** and the **Distill team**, which provides the clean and readable format for this wiki. Thank you!
+## ♥ Acknowledgments
 
-We highly recommend checking out their work, especially if you are interested in scaling large models on TPUs. For academic citation of their work, please refer to the [citation information in their repository](https://github.com/jax-ml/scaling-book?tab=readme-ov-file#citation).
+This project is inspired by the structure and collaborative spirit of the fantastic **[How To Scale Your Model](https://jax-ml.github.io/scaling-book)** by the team at Google DeepMind.
 
-## License
+Special thanks to:  
+Jacob Austin, Sholto Douglas, Roy Frostig, Anselm Levskaya, Charlie Chen, Sharad Vikram, Federico Lebron, Peter Choy, Vinay Ramasesh, Albert Webson, James Bradbury, Reiner Pope—and all contributors behind this incredible resource: [jax-ml/scaling-book](https://github.com/jax-ml/scaling-book).
 
-The content (text, articles) of this wiki is licensed under **[Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](LICENSE-CONTENT)**.
+The site design is based on a Distill-style Jekyll theme from **[al-folio](https://github.com/alshedivat/al-folio)** and the **Distill team**, providing a clean and accessible reading experience.
 
-The underlying code used to format and display the content use the same license as [original repo](github.com/jax-ml/scaling-book) (MIT License).
+If you’re interested in large-scale ML systems or TPU training, their work is a must-read.
 
-## Contact
+📖 For citation, see the [citation section in their repo](https://github.com/jax-ml/scaling-book?tab=readme-ov-file#citation).
 
-Currently maintained by: **[lenguyen18072003](https://github.com/lenguyen18072003)**.
+## 📄 License
 
-Feel free to open an Issue for any questions or discussions!
+- **Content** (text, articles):  
+  Licensed under **[Creative Commons BY-SA 4.0](LICENSE-CONTENT)**.
+
+- **Code** (site framework & structure):  
+  Follows the same license as the original [scaling-book repo](https://github.com/jax-ml/scaling-book): **MIT License**.
+
+## 👤 Maintainer
+
+Maintained by [@lenguyen18072003](https://github.com/lenguyen18072003).
+
+Questions? Ideas? Feel free to [open an issue](https://github.com/lenguyen18072003/cs4all-vn/issues)!
