@@ -18,6 +18,9 @@ next_section: true
 
 previous_section_url: "/cs4all-vn/prml/chapter1/prob_theory/bayes"
 previous_section_name: "Bayesian Probabilities"
+next_section_url: "/cs4all-vn/prml/chapter1/prob_theory/curve_revisit"
+next_section_name: "Curve Fitting Revisited"
+
 
 authors:
   - name: Lê Nguyễn

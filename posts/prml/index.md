@@ -3,7 +3,7 @@ layout: distill
 permalink: /prml/
 title: "Học máy trông nặng nhọc vậy"
 subtitle: "PRML"
-description: "Chào mọi người! Chào mừng các bạn đã ghé qua Góc Học Máy (Machine Learning) của tụi mình! 👋 Để khởi động, tụi mình sẽ cùng nhau 'chiến đấu' với một 'trùm cuối' khá nổi tiếng trong làng ML là cuốn 'Pattern Recognition and Machine Learning' (PRML) của Christopher Bishop."
+description: "Chào các bạn! 👋  Chào mừng đến với Góc Học Máy (Machine Learning) của tụi mình. Để khởi động hành trình này, chúng ta sẽ cùng tìm hiểu một trong những tài liệu kinh điển nhất trong lĩnh vực ML: cuốn Pattern Recognition and Machine Learning (PRML) của Christopher Bishop."
 date: 2025-04-22
 future: true
 htmlwidgets: true
@@ -38,7 +38,7 @@ Icon 🚧 nghĩa là đang viết, 💀 nghĩa là chưa viết và ✅ nghĩa l
     - 1.2.2 [Expectations and Covariances](./chapter1/prob_theory/expectation) ✅
     - 1.2.3 [Bayesian Probabilities](./chapter1/prob_theory/bayes) ✅
     - 1.2.4 [Gaussian Distribution](./chapter1/prob_theory/normal) ✅
-    - 1.2.5 [Curve Fitting Revisited]() 🚧
+    - 1.2.5 [Curve Fitting Revisited](./chapter1/prob_theory/curve_revisit.md) ✅
     - 1.2.6 [Bayesian Curve Fitting]() 💀
 - 1.3 **[Model Selection]()** 💀
 - 1.4 **[The Curse of Dimensionality]()** 💀

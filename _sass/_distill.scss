@@ -199,6 +199,11 @@ d-appendix {
   padding-left: 10px;
 }
 
+.important {
+  background-color: #A5DD9B;
+  padding-left: 10px;
+}
+
 .img-small {
   max-width: 500px;
   display: block;
@@ -244,6 +249,12 @@ d-article d-contents nav div {
 
 .takeaway {
   background-color: var(--global-takeaway-color);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.important {
+  background-color: var(--global-important-color);
   padding: 10px;
   border-radius: 5px;
 }
